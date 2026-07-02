@@ -1,13 +1,14 @@
 // AETHERFALL — enemy_slime: glowing cyan-green energy slime with a tiny magenta
 // reactor core pulsing inside its translucent gel body.
-// Frames are 18x18 (body ~16x12) to leave room for stretch + airborne lift.
+// Frames are 20x18 (body ~16x12) to leave room for stretch, airborne lift and a
+// full 1px outline even on the widest squash frames.
 //   row 0: move   — 6-frame hop cycle (rest, crouch, launch, apex, fall, land-splat)
 //   row 1: attack — 4-frame wind-up jiggle (lean, wobble, charge-flash, pop)
-// Anchor = feet center (9, 18).
+// Anchor = feet center (10, 18).
 import { PAL } from './palette.js';
 import { makeCanvas, P, R, circleFill, outline, glow, frameGrid } from './util.js';
 
-const FW = 18, FH = 18, CX = 9;
+const FW = 20, FH = 18, CX = 10;
 
 // draw one slime pose into frame at (fx, fy)
 // o: { bw, bh, lift, lean, squint, core (0..1), ph (fleck phase), mouth, splat, drip, charge, burst }
@@ -44,7 +45,8 @@ function drawSlime(ctx, fx, fy, o) {
   P(ctx, cx + leanTop - Math.max(1, Math.round(rx * 0.55)), topY + 2, PAL.leaf0);
 
   // --- dark gel pocket where the reactor core sits ---
-  const coreY = topY + Math.round(bh * 0.58);
+  // clamp so the r=3 core glow never bleeds past this frame's bottom row
+  const coreY = Math.min(topY + Math.round(bh * 0.58), fy + FH - 4);
   circleFill(ctx, cx, coreY, 2, PAL.cyan3);
 
   // --- face: two glossy eyes (+ optional mouth) ---
@@ -74,9 +76,10 @@ function drawSlime(ctx, fx, fy, o) {
     P(ctx, cx - 7, bottom - 4, PAL.cyan0);
   }
   if (o.drip) {                           // goo trailing below an airborne body
-    P(ctx, cx - 2, bottom + 1, PAL.cyan2);
-    P(ctx, cx + 1, bottom + 2, PAL.leaf1);
-    P(ctx, cx - 1, Math.min(bottom + 3, fy + FH - 1), PAL.cyan3);
+    const maxY = fy + FH - 1;             // clamp: never bleed into the frame below
+    P(ctx, cx - 2, Math.min(bottom + 1, maxY), PAL.cyan2);
+    P(ctx, cx + 1, Math.min(bottom + 2, maxY), PAL.leaf1);
+    P(ctx, cx - 1, Math.min(bottom + 3, maxY), PAL.cyan3);
   }
 
   // dark contour around everything opaque so far
@@ -110,18 +113,18 @@ export function build() {
 
   // hop cycle: rest -> anticipation crouch -> launch stretch -> apex -> fall stretch -> land splat
   const MOVE = [
-    { bw: 14, bh: 9,  lift: 0, lean: 0,  squint: 0, core: 0.5,  ph: 0 },
-    { bw: 15, bh: 7,  lift: 0, lean: 0,  squint: 1, core: 0.35, ph: 1 },
+    { bw: 14, bh: 10, lift: 0, lean: 0,  squint: 0, core: 0.5,  ph: 0 },
+    { bw: 16, bh: 7,  lift: 0, lean: 0,  squint: 1, core: 0.35, ph: 1 },
     { bw: 10, bh: 14, lift: 1, lean: 1,  squint: 0, core: 0.8,  ph: 2, drip: true },
     { bw: 11, bh: 12, lift: 4, lean: 0,  squint: 0, core: 1.0,  ph: 3, drip: true },
     { bw: 10, bh: 13, lift: 2, lean: -1, squint: 0, core: 0.8,  ph: 4, drip: true },
-    { bw: 14, bh: 6,  lift: 0, lean: 0,  squint: 1, core: 0.5,  ph: 5, splat: true },
+    { bw: 16, bh: 6,  lift: 0, lean: 0,  squint: 1, core: 0.5,  ph: 5, splat: true },
   ];
   // wind-up jiggle: lean back -> wobble forward -> charge squash (core flash) -> pop
   const ATTACK = [
-    { bw: 14, bh: 9,  lift: 0, lean: -2, squint: 0, core: 0.5, ph: 0 },
-    { bw: 15, bh: 8,  lift: 0, lean: 2,  squint: 0, core: 0.7, ph: 2, mouth: true },
-    { bw: 15, bh: 7,  lift: 0, lean: -2, squint: 1, core: 1.0, ph: 4, mouth: true, charge: true },
+    { bw: 14, bh: 10, lift: 0, lean: -2, squint: 0, core: 0.5, ph: 0 },
+    { bw: 16, bh: 8,  lift: 0, lean: 2,  squint: 0, core: 0.7, ph: 2, mouth: true },
+    { bw: 16, bh: 7,  lift: 0, lean: -2, squint: 1, core: 1.0, ph: 4, mouth: true, charge: true },
     { bw: 12, bh: 12, lift: 0, lean: 0,  squint: 0, core: 1.0, ph: 1, mouth: true, burst: true },
   ];
 

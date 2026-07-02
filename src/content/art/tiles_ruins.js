@@ -160,9 +160,10 @@ function column(ctx, x, y) {
   // shaft — light rakes in from the left
   R(ctx, x + 3, y, 1, T, MARBLE);
   R(ctx, x + 4, y, 2, T, S0);
-  R(ctx, x + 6, y, 1, T, S1);                 // flute groove
-  R(ctx, x + 7, y, 2, T, S0);
-  R(ctx, x + 9, y, 1, T, S1);                 // flute groove
+  R(ctx, x + 6, y, 1, T, S2);                 // flute groove (deep shadow)
+  R(ctx, x + 7, y, 1, T, MARBLE);             // lit ridge between flutes
+  R(ctx, x + 8, y, 1, T, S0);
+  R(ctx, x + 9, y, 1, T, S2);                 // flute groove (deep shadow)
   R(ctx, x + 10, y, 2, T, shade(S0, -0.12));
   R(ctx, x + 12, y, 1, T, S2);                // east shadow edge
   // drum joints every 8px so stacked tiles read as segmented drums
@@ -249,20 +250,26 @@ function dryGrass(ctx, x, y, seed) {
 
 // ---- 'c' verdigris ornament ------------------------------------------------------
 function ornament(ctx, x, y) {
-  // corroded bronze rosette bolted to the masonry
-  circleFill(ctx, x + 8, y + 8, 5, VG_LO);
-  circleFill(ctx, x + 7, y + 7, 4, VG);
-  circleFill(ctx, x + 7, y + 7, 2, VG_HI);
-  // surviving gold leaf on the sun-lit upper rim
-  P(ctx, x + 4, y + 4, PAL.gold1);
-  P(ctx, x + 5, y + 3, PAL.gold1);
+  // corroded bronze rosette bolted to the masonry — machined ring with a
+  // recessed dark well and surviving gold leaf, so it reads METAL not foliage
+  circleFill(ctx, x + 8, y + 8, 5, VG_DK);          // shaded outer rim
+  circleFill(ctx, x + 7, y + 7, 4, VG);             // ring body, lit toward upper-left
+  circleFill(ctx, x + 8, y + 8, 2, VG_DK);          // recessed center well
+  // surviving gold leaf — bold crescent along the sun-lit upper-left rim
+  for (const [ax, ay] of [[3, 7], [3, 8], [4, 5], [4, 6], [5, 4], [6, 4], [7, 3], [8, 3]]) {
+    P(ctx, x + ax, y + ay, PAL.gold1);
+  }
+  P(ctx, x + 4, y + 4, PAL.gold0);                  // sun glints on the leaf
   P(ctx, x + 6, y + 3, PAL.gold0);
-  P(ctx, x + 10, y + 12, PAL.amber2);
-  // radial spokes
-  for (const [sx, sy] of [[8, 4], [4, 8], [8, 11], [11, 8]]) P(ctx, x + sx, y + sy, VG_DK);
-  // center boss
+  // machined highlight inside the ring + radial rivet spokes
+  P(ctx, x + 5, y + 6, VG_HI); P(ctx, x + 6, y + 5, VG_HI);
+  for (const [sx, sy] of [[8, 5], [5, 8], [8, 11], [11, 8]]) P(ctx, x + sx, y + sy, PAL.amber2);
+  // gold center boss glinting in the dark well
+  P(ctx, x + 8, y + 8, PAL.gold1);
   P(ctx, x + 7, y + 7, PAL.gold0);
-  P(ctx, x + 8, y + 8, VG_DK);
+  // corner mounting bolts
+  P(ctx, x + 3, y + 3, PAL.amber2); P(ctx, x + 12, y + 3, VG_LO);
+  P(ctx, x + 3, y + 12, VG_LO); P(ctx, x + 12, y + 12, VG_DK);
   // green drip stain weeping down
   P(ctx, x + 8, y + 13, VG_LO);
   P(ctx, x + 8, y + 14, VG_LO);

@@ -143,7 +143,7 @@ export function build() {
   glow(ctx, M1.x, M1.y, M1.r + 12, PAL.violet2);
   const moonRamp = [shade(PAL.stone0, 0.3), PAL.stone0, PAL.stone1, PAL.stone2, PAL.stone3];
   sphere(M1.x, M1.y, M1.r, moonRamp, {
-    chunk: { at: 0.38, gap: 0.13, dx: 6, dy: 5 },
+    chunk: { at: 0.38, gap: 0.2, dx: 9, dy: 8 },
     craters: [
       { x: -0.42, y: 0.1, r: 0.2 }, { x: 0.12, y: -0.44, r: 0.15 },
       { x: 0.3, y: 0.05, r: 0.11 }, { x: -0.12, y: 0.38, r: 0.13 },
@@ -151,18 +151,27 @@ export function build() {
   });
   // glowing fissure along the main body's fracture face: nx+ny = at/0.707 -> dy = fk - dx
   const fk = Math.round((0.38 / 0.707) * M1.r);
-  glow(ctx, M1.x + fk / 2 + 3, M1.y + fk / 2 + 3, 10, PAL.cyan2);
+  glow(ctx, M1.x + fk / 2 - 5, M1.y + fk / 2 + 5, 6, PAL.cyan2);
+  glow(ctx, M1.x + fk / 2 + 8, M1.y + fk / 2 - 7, 5, PAL.cyan2);
   for (let dx = -M1.r; dx <= M1.r; dx++) {
     const dy = fk - dx;
     if (dx * dx + dy * dy > M1.r * M1.r * 0.96) continue;
-    px(M1.x + dx, M1.y + dy, ((dx & 3) === 0) ? PAL.cyan0 : PAL.cyan1);
-    px(M1.x + dx, M1.y + dy - 1, ((dx & 3) === 2) ? PAL.cyan2 : PAL.cyan3);
+    // broken molten edge on the main body — skip pixels so it reads jagged, not striped
+    if ((dx & 7) !== 3) px(M1.x + dx, M1.y + dy, ((dx & 3) === 0) ? PAL.cyan0 : PAL.cyan1);
+    if ((dx & 3) === 2) px(M1.x + dx, M1.y + dy - 1, PAL.cyan3);
     if ((dx & 7) === 5) { // sparks bleeding into the gap
       px(M1.x + dx + 1, M1.y + dy + 2, PAL.cyan1);
       px(M1.x + dx + 2, M1.y + dy + 4, PAL.cyan3);
     }
   }
   px(M1.x + fk / 2, M1.y + fk / 2, PAL.white); // hot core pixel on the fissure
+  // small rock bits tumbling inside the widened fracture gap
+  const gapBits = [[-8, 6, PAL.stone2], [-2, 3, PAL.stone1], [4, -2, PAL.stone3], [10, -7, PAL.stone2], [1, 4, PAL.cyan1]];
+  for (const [gx, gpy, gc] of gapBits) {
+    const bx = M1.x + fk / 2 + gx, by = M1.y + fk / 2 - gx + gpy;
+    px(bx, by, gc);
+    if (gc === PAL.stone2) px(bx - 1, by, PAL.stone1);
+  }
   // secondary hairline crack across the lit face
   for (let s = -9; s <= 6; s++) {
     const cx2 = M1.x - 4 + s, cy2 = M1.y - 6 + Math.round(s * 0.35) + ((s & 2) ? 1 : 0);

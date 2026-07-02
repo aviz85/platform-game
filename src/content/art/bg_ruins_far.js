@@ -123,7 +123,7 @@ function birds(ctx) {
   }
 }
 
-// ---- one tiny broken tower (jagged top, sun rim, lit windows) ----
+// ---- one tiny broken tower (jagged top, battlement cap, sun rim, lit windows) ----
 function tower(ctx, bx, baseY, tw, th, col, rimCol, winCol, seed, spire) {
   const r = rng(seed);
   const tops = [];
@@ -131,6 +131,18 @@ function tower(ctx, bx, baseY, tw, th, col, rimCol, winCol, seed, spire) {
     const topY = baseY - th + Math.floor(r() * 3.4);          // broken crown
     tops.push(topY);
     wCol(ctx, bx + i, topY, baseY, col);
+  }
+  // shattered battlement cap — 1px overhang each side, crenel gaps (only if wide enough)
+  if (tw >= 5) {
+    const capY = Math.min(...tops);
+    for (let i = -1; i <= tw; i++) {
+      if (i >= 0 && i < tw && tops[i] > capY + 2) continue;    // keep the break jagged
+      if (((i + tw) & 3) === 2) continue;                      // crenel gap
+      wP(ctx, bx + i, capY, col);
+      wP(ctx, bx + i, capY - 1, i < tw / 2 ? rimCol : col);    // merlon, sunlit on left
+    }
+    // shoulder buttress at the base, right side (broadens the footing)
+    wCol(ctx, bx + tw, baseY - Math.floor(th * 0.3), baseY, shade(col, -0.15));
   }
   if (spire) {
     const sx = bx + (tw >> 1);
@@ -170,8 +182,8 @@ function brokenBridge(ctx, x0, x1, y, col) {
   wP(ctx, gap0 + 3, y + 4, shade(col, -0.15));                 // falling stone
 }
 
-// ---- one cloud puff: soft top-half ellipse + top-left highlight arc ----
-function puff(ctx, cx, cy, rx, ry, col, hi) {
+// ---- one cloud puff: soft top-half ellipse + top-left highlight arc + under-shadow ----
+function puff(ctx, cx, cy, rx, ry, col, hi, sh) {
   rx = Math.max(2, rx | 0); ry = Math.max(1, ry | 0);
   for (let dy = -ry; dy <= 0; dy++) {
     const w = Math.floor(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry))));
@@ -182,33 +194,44 @@ function puff(ctx, cx, cy, rx, ry, col, hi) {
     const yy = Math.floor(ry * Math.sqrt(Math.max(0, 1 - (dx * dx) / (rx * rx))));
     if (yy > 0) wP(ctx, cx + dx, cy - yy, hi);
   }
+  // soft shadow tucked under the right shoulder — gives the swell a rolling belly
+  if (sh) {
+    const w = Math.floor(rx * 0.55);
+    for (let i = 0; i <= w; i++) if ((i & 3) !== 3) wP(ctx, cx + i + ((rx * 0.2) | 0), cy + 2, sh);
+  }
 }
 
 // ---- one band of the cloud sea: base fill + rolling lit puffs along the top ----
 function cloudBand(ctx, yTop, col, hiCol, hiSun, seed, rMin, rMax, ryMax) {
-  R(ctx, 0, yTop, W, H - yTop, col);
+  R(ctx, 0, yTop + 2, W, H - yTop - 2, col);
+  const sh = shade(col, -0.13);
   const r = rng(seed);
   let x = Math.floor(r() * 6);
   while (x < W + rMax) {                                       // overshoot => seam covered
     const rx = rMin + r() * (rMax - rMin);
-    const ry = 2 + r() * (ryMax - 2);
-    const cy = yTop + 1 + Math.floor(r() * 2);
+    const ry = 3 + r() * (ryMax - 2);
+    const cy = yTop + 2 + Math.floor(r() * 3);                 // varied crest heights
     const hi = sunDX(x) < 85 ? hiSun : hiCol;
-    puff(ctx, x, cy, rx, ry, col, hi);
-    x += rx * (0.75 + r() * 0.7);
+    puff(ctx, x, cy, rx, ry, col, hi, sh);
+    x += rx * (0.55 + r() * 0.6);                              // denser => no flat gaps
   }
 }
 
-// ---- sun glitter path on the nearest cloud tops ----
+// ---- sun glitter road on the cloud tops: widens toward the viewer, sparkles thin out ----
 function glitter(ctx, yTop) {
   const r = rng(99);
-  for (let i = 0; i < 14; i++) {
-    const x = SUNX - 34 + Math.floor(r() * 68);
-    const y = yTop - 2 + Math.floor(r() * 7);
-    const len = 2 + Math.floor(r() * 3);
-    const c = r() > 0.5 ? PAL.sun : PAL.gold0;
+  for (let i = 0; i < 30; i++) {
+    const y = yTop - 2 + Math.floor(r() * 16);                 // reaches down the band
+    const spreadHalf = 16 + (y - yTop) * 2.1;                  // road widens with depth
+    const x = SUNX - spreadHalf + Math.floor(r() * spreadHalf * 2);
+    if (r() < (y - yTop + 3) / 26) continue;                   // sparser far from the crest
+    const len = 2 + Math.floor(r() * 4);
+    const c = r() > 0.45 ? PAL.sun : (r() > 0.4 ? PAL.gold0 : PAL.amber0);
     for (let k = 0; k < len; k++) wP(ctx, x + k, y, c);
   }
+  // one hot glint right where the sun meets the cloud sea
+  R(ctx, SUNX - 5, yTop - 1, 10, 1, PAL.gold0);
+  R(ctx, SUNX - 2, yTop - 1, 5, 1, PAL.white);
 }
 
 // ---- floating masonry motes drifting near the towers ----
@@ -258,6 +281,7 @@ export function build() {
   wP(ctx, 345, tallTops[3] + 9, PAL.gold0);
   tower(ctx, 415, 206, 5, 27, tcol, trim, PAL.amber0, 614, false);
   tower(ctx, 474, 206, 8, 33, tcol, trim, PAL.amber0, 615, false); // straddles the seam
+  brokenBridge(ctx, 420, 474, 190, tcol);                     // second ruined span
   motes(ctx, tcol);
 
   // 5) cloud sea band 1 — swallows the tower bases

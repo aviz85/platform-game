@@ -93,6 +93,7 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
   for (let ti = 0; ti < 5; ti++) {
     const tx = cx + baseX[ti];
     const len = Math.max(1, tipY[ti] - yStart);
+    let prevX = null;
     for (let y = yStart; y <= tipY[ti]; y++) {
       const k = y - yStart;
       const amp = Math.min(2, 0.5 + k * 0.25);             // amplitude grows to the tip
@@ -100,9 +101,14 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
       if (flare > 0) xo += Math.sign(tx - cx) * Math.round(flare * k / 4); // outward splay
       const f = k / len;
       const col = f < 0.3 ? c3 : f < 0.65 ? c2 : c1;
-      P(ctx, tx + xo, y, col);
-      if (ti === 2 && k < 2) P(ctx, tx + xo + 1, y, c3);   // thicker center tendril root
-      if (y === tipY[ti]) P(ctx, tx + xo, y, bright > 0.6 ? PAL.white : c0); // lit tip
+      const X = tx + xo;
+      if (prevX !== null && Math.abs(X - prevX) > 1) {
+        P(ctx, (X + prevX) >> 1, y, col);                  // bridge diagonal jumps — keep tendril connected
+      }
+      P(ctx, X, y, col);
+      if (ti === 2 && k < 2) P(ctx, X + 1, y, c3);         // thicker center tendril root
+      if (y === tipY[ti]) P(ctx, X, y, bright > 0.6 ? PAL.white : c0); // lit tip
+      prevX = X;
     }
   }
 

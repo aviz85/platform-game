@@ -101,7 +101,6 @@ function towerBroken() {
   R(ctx, wx + 2, wy + wh - 4, ww - 4, 3, PAL.amber1);
   R(ctx, wx + 4, wy + wh - 2, ww - 8, 1, PAL.amber0);
   P(ctx, wx + 5, wy + wh - 2, PAL.sun);
-  glow(ctx, wx + 6, wy + wh - 3, 6, PAL.amber1);
   // window sill + keystone
   R(ctx, wx - 1, wy + wh, ww + 2, 2, ST[1]);
   R(ctx, wx - 1, wy + wh, ww + 2, 1, ST[0]);
@@ -110,7 +109,6 @@ function towerBroken() {
   const gx = 14, gy = 50;
   R(ctx, gx, gy, 1, 7, PAL.cyan1); R(ctx, gx + 3, gy, 1, 7, PAL.cyan1);
   R(ctx, gx, gy + 3, 4, 1, PAL.cyan0); P(ctx, gx + 1, gy, PAL.cyan0);
-  glow(ctx, gx + 2, gy + 3, 5, PAL.cyan1);
   // cracks + weathering
   crack(ctx, 40, 26, 14, r); crack(ctx, 13, 30, 10, r); crack(ctx, 33, 64, 9, r);
   moss(ctx, L, H - 8, 14, 8, r, 0.45);
@@ -120,11 +118,17 @@ function towerBroken() {
   // floating masonry chips (drawn after body outline, then outlined themselves)
   const chip = (x, y, w, h) => {
     R(ctx, x, y, w, h, ST[2]); R(ctx, x, y, w, 1, ST[0]); R(ctx, x, y + 1, 1, h - 1, ST[1]);
-    glow(ctx, x + w / 2, y + h + 2, 3, PAL.cyan1);
-    P(ctx, x + (w >> 1), y + h + 1, PAL.cyan0);
   };
-  chip(1, 12, 6, 5); chip(50, 30, 5, 4); chip(2, 44, 4, 4);
+  const chips = [[1, 12, 6, 5], [50, 30, 5, 4], [2, 44, 4, 4]];
+  for (const [x, y, w, h] of chips) chip(x, y, w, h);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  // emissive passes AFTER outline (glow halos must not be outlined)
+  glow(ctx, wx + 6, wy + wh - 3, 6, PAL.amber1);       // window light spill
+  glow(ctx, gx + 2, gy + 3, 5, PAL.cyan1);             // holo-glyph
+  for (const [x, y, w, h] of chips) {                  // anti-grav motes under chips
+    P(ctx, x + (w >> 1), y + h + 1, PAL.cyan0);
+    glow(ctx, x + (w >> 1), y + h + 2, 3, PAL.cyan1);
+  }
   return { canvas: c };
 }
 
@@ -151,7 +155,6 @@ function bannerPole() {
   circleFill(ctx, 6, 5, 3, PAL.gold1);
   P(ctx, 5, 4, PAL.gold0); P(ctx, 6, 4, PAL.gold0); P(ctx, 5, 5, PAL.gold0);
   P(ctx, 5, 3, PAL.white);
-  glow(ctx, 6, 5, 5, PAL.gold0);
   // banner — hangs from crossbar, wind-blown wavy right edge, tattered hem
   const by = 13, bx = 9;
   for (let y = by; y <= 56; y++) {
@@ -180,10 +183,12 @@ function bannerPole() {
   R(ctx, ex - 1, ey + 2, 3, 2, PAL.violet2);
   P(ctx, ex, ey + 4, PAL.violet3);
   P(ctx, ex - 1, ey - 1, PAL.violet0); P(ctx, ex, ey, PAL.violet0);
-  glow(ctx, ex, ey, 4, PAL.violet1);
   // banner rings on crossbar
   P(ctx, 10, 12, PAL.gold1); P(ctx, 16, 12, PAL.gold1); P(ctx, 22, 12, PAL.gold1);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  // emissive passes AFTER outline
+  glow(ctx, 6, 5, 5, PAL.gold0);       // finial catching the sun
+  glow(ctx, ex, ey, 4, PAL.violet1);   // crystal emblem
   return { canvas: c };
 }
 
@@ -204,7 +209,6 @@ function bridgeArch() {
     const jag = [0, 2, 1, 3, 0, 2][x % 6];
     if (x >= breakL + (x % 3) && x < breakR - jag % 2) continue;
     const bot = underside(x);
-    const t = x < 20 ? 0 : x > 56 ? 1 : (x - 20) / 36;
     const col = x < 14 ? ST[1] : x > 62 ? ST[2] : ST[1];
     R(ctx, x, deckY, 1, bot - deckY, col);
     // broken end shadow faces
@@ -298,7 +302,6 @@ function guardianStatue() {
   R(ctx, 12, 23, 8, 2, PAL.deepPurple);
   P(ctx, 14, 23, PAL.cyan0); P(ctx, 18, 23, PAL.cyan0);
   P(ctx, 14, 24, PAL.cyan1); P(ctx, 18, 24, PAL.cyan1);
-  glow(ctx, 16, 24, 4, PAL.cyan1);
   // greatsword — point down, blade between the legs' front
   R(ctx, 15, 44, 2, 14, RAMPS.metal[1]);
   R(ctx, 15, 44, 1, 14, RAMPS.metal[0]);
@@ -313,6 +316,7 @@ function guardianStatue() {
   moss(ctx, 5, 28, 4, 2, r, 0.5); moss(ctx, 3, 64, 8, 3, r, 0.5);
   moss(ctx, 22, 58, 5, 2, r, 0.4);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  glow(ctx, 16, 24, 4, PAL.cyan1);     // eye glow AFTER outline
   return { canvas: c };
 }
 
@@ -349,16 +353,16 @@ function brazierColumn() {
   P(ctx, 12, 1, PAL.amber0); P(ctx, 10, 3, PAL.amber1); P(ctx, 14, 2, PAL.amber1);
   P(ctx, 12, 4, PAL.sun); P(ctx, 12, 5, PAL.white); P(ctx, 13, 5, PAL.sun);
   P(ctx, 15, 4, PAL.ember0); P(ctx, 9, 5, PAL.ember0);         // licking tongues
-  glow(ctx, 12, 5, 8, PAL.amber1);
-  glow(ctx, 12, 4, 4, PAL.amber0);
-  // drifting embers
-  P(ctx, 6, 2, PAL.ember0); P(ctx, 19, 1, PAL.amber0); P(ctx, 21, 5, PAL.ember1);
   // warm underlight on the capital from the fire
   P(ctx, 9, 16, PAL.amber1); P(ctx, 12, 16, PAL.amber0); P(ctx, 16, 16, PAL.amber1);
   // weathering
   crack(ctx, 10, 30, 9, r);
   moss(ctx, 3, 57, 7, 3, r, 0.5); moss(ctx, 16, 52, 5, 2, r, 0.4);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  // emissive passes AFTER outline: fire halo + drifting embers
+  glow(ctx, 12, 5, 8, PAL.amber1);
+  glow(ctx, 12, 4, 4, PAL.amber0);
+  P(ctx, 6, 2, PAL.ember0); P(ctx, 19, 1, PAL.amber0); P(ctx, 21, 5, PAL.ember1);
   return { canvas: c };
 }
 
@@ -383,17 +387,16 @@ function floatingMasonry() {
     P(ctx, sx, y + h, PAL.cyan1); P(ctx, sx - 1, y + h, PAL.cyan2);
     P(ctx, sx, y + h + 1, PAL.cyan0); P(ctx, sx + 1, y + h + 1, PAL.cyan2);
     P(ctx, sx, y + h + 2, PAL.cyan1);
-    glow(ctx, sx, y + h + 1, 4, PAL.cyan1);
   };
-  block(2, 3, 13, 8, ST[1]);
-  block(20, 8, 14, 9, ST[2]);
-  block(9, 20, 11, 7, ST[1]);
+  const blocks = [[2, 3, 13, 8, ST[1]], [20, 8, 14, 9, ST[2]], [9, 20, 11, 7, ST[1]]];
+  for (const [x, y, w, h, base] of blocks) block(x, y, w, h, base);
   // tiny drifting grit
   P(ctx, 17, 4, ST[2]); P(ctx, 30, 22, ST[2]); P(ctx, 4, 16, ST[1]);
   P(ctx, 25, 28, ST[2]); P(ctx, 33, 3, ST[1]);
-  // faint holo-glyph mote
-  P(ctx, 6, 29, PAL.cyan1); glow(ctx, 6, 29, 2, PAL.cyan1);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  // emissive passes AFTER outline: shard halos + holo-glyph mote
+  for (const [x, y, w, h] of blocks) glow(ctx, x + (w >> 1), y + h + 1, 4, PAL.cyan1);
+  P(ctx, 6, 29, PAL.cyan1); glow(ctx, 6, 29, 2, PAL.cyan1);
   return { canvas: c };
 }
 

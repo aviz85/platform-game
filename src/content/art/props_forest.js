@@ -318,11 +318,12 @@ function buildArch() {
     R(ctx, px + w - 2, cy, 2, 22, S[2]);
     P(ctx, px + w - 1, cy + 10, S[3]);
     for (let y = cy + 4; y < cy + 22; y += 5) line(ctx, px + 1, y, px + w - 2, y, S[2]); // block courses
-    // footing
-    R(ctx, px - 2, cy + 22, w + 4, 4, S[2]);
+    // footing (reaches y=56 so the arch sits flush when bottom-aligned on the ground)
+    R(ctx, px - 2, cy + 22, w + 4, 5, S[2]);
     R(ctx, px - 2, cy + 22, w + 4, 1, S[1]);
     R(ctx, px - 2, cy + 22, 4, 1, S[0]);
     P(ctx, px + w + 1, cy + 25, S[3]);
+    R(ctx, px - 2, cy + 26, w + 4, 1, S[3]);               // dark contact row at ground
   }
 
   // glowing keystone rune at the apex

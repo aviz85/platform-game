@@ -26,7 +26,8 @@ function drawDrone(ctx, fx, fy, o) {
   } = o;
 
   const by = 5 + bob; // hull top row
-  const px = (x, y, c) => P(ctx, fx + x, fy + y + (dip && x >= 10 ? dip : 0), c);
+  // shear starts past the lens (x>=11) so the eye never splits across the dip
+  const px = (x, y, c) => P(ctx, fx + x, fy + y + (dip && x >= 11 ? dip : 0), c);
   const row = (x0, x1, y, c) => { for (let x = x0; x <= x1; x++) px(x, y, c); };
 
   // --- antenna (lags behind the bob) ---
@@ -80,7 +81,7 @@ function drawDrone(ctx, fx, fy, o) {
 
   const flame = (x0, len, hot) => {
     if (len <= 0) return;
-    const yy = by + 7 + (dip && x0 >= 10 ? dip : 0);
+    const yy = by + 7 + (dip && x0 >= 11 ? dip : 0);
     row(x0, x0 + 1, by + 7, hot ? PAL.white : PAL.cyan0);
     if (len > 1) row(x0, x0 + 1, by + 8, PAL.cyan1);
     if (len > 2) px(x0 + (hot ? 1 : 0), by + 9, PAL.cyan2);
@@ -141,7 +142,7 @@ export function build() {
     crackle: true,
   });
   drawDrone(ctx, FW * 3, FH, {               // f3: swoop — nose dips, engines blast
-    bob: 1, dip: 1, sway: 1,
+    bob: 0, dip: 1, sway: 1,                 // bob 0 keeps the dipped flame tip in-frame
     eyeTop: PAL.pink1, eyeBot: PAL.magenta2,
     eyeHot: PAL.white,
     eyeGlowC: PAL.magenta1, eyeGlowR: 3,
@@ -154,6 +155,6 @@ export function build() {
       move: { frames: frameGrid(FW, FH, 6, 0), fps: 8, loop: true },
       attack: { frames: frameGrid(FW, FH, 4, 1), fps: 10, loop: false },
     },
-    anchor: { x: FW / 2, y: FH - 1 },
+    anchor: { x: FW / 2, y: FH },
   };
 }

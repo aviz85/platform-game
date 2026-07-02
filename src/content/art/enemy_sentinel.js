@@ -59,8 +59,8 @@ function drawBase(ctx, ox, oy) {
 
 // ---- rotating tech head ----
 // s: head x-shift (sweep/recoil), sway: antenna lag,
-// core: [outerRing, innerRing, hot] colors, scan: dim pixel ahead of lens
-function drawHead(ctx, ox, oy, s, sway, core, scan, blink) {
+// core: [outerRing, innerRing, hot] colors
+function drawHead(ctx, ox, oy, s, sway, core, blink) {
   const M0 = PAL.metal0, M1 = PAL.metal1, M2 = PAL.metal2, M3 = PAL.metal3;
 
   // antenna (back-left, lags behind the sweep) — drawn first so housing overlaps its root
@@ -104,8 +104,6 @@ function drawHead(ctx, ox, oy, s, sway, core, scan, blink) {
   P(ctx, cx,     cy - 1, core[1]);
   P(ctx, cx - 1, cy,     core[1]);
   P(ctx, cx,     cy,     core[2]);                // hot pixel
-  // dim scan light thrown ahead of the lens
-  if (scan) P(ctx, cx + 3, cy, shade(PAL.amber1, -0.35));
 }
 
 // glow passes drawn AFTER outline so halos read as light, not body
@@ -128,9 +126,11 @@ export function build() {
     drawBase(ctx, ox, oy);
     drawHead(ctx, ox, oy, sweep[i], sway[i],
       [PAL.amber2, PAL.amber1, pulse ? PAL.gold0 : PAL.amber0],
-      true, i === 1);
+      i === 1);
     outline(ctx, ox, oy, FW, FH);
     drawGlows(ctx, ox, oy, sweep[i], sway[i], pulse ? 3 : 2, PAL.amber1);
+    // dim scan light thrown ahead of the lens (emissive — after outline)
+    P(ctx, ox + 13 + sweep[i] + 3, oy + 8, shade(PAL.amber1, -0.35));
   }
 
   // ---------- row 1: attack (charge-up → muzzle flash) ----------
@@ -156,7 +156,7 @@ export function build() {
     const ox = i * FW, oy = FH;
     const s = atkShift[i];
     drawBase(ctx, ox, oy);
-    drawHead(ctx, ox, oy, s, atkSway[i], cores[i], false, true);
+    drawHead(ctx, ox, oy, s, atkSway[i], cores[i], true);
     // rune surges with the charge
     if (i >= 1) P(ctx, ox + 11, oy + 16, PAL.gold0);
     // white-hot frame: rim-light the whole housing top with heat

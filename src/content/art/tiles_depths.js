@@ -104,8 +104,7 @@ function tileRock(ctx, ox, oy, seed, extra) {
     R(ctx, ox + 4, oy + 7, 8, 1, PAL.rust0);               // top lit
     R(ctx, ox + 4, oy + 10, 8, 1, PAL.rust2);              // bottom shade
     rivet(ctx, ox + 2, oy + 7); rivet(ctx, ox + 13, oy + 9);
-    P(ctx, ox + 8, oy + 8, PAL.cyan1);                     // status lamp
-    P(ctx, ox + 8, oy + 8, PAL.cyan1); P(ctx, ox + 9, oy + 8, PAL.cyan0);
+    P(ctx, ox + 8, oy + 8, PAL.cyan1); P(ctx, ox + 9, oy + 8, PAL.cyan0); // status lamp
     glow(ctx, ox + 8, oy + 8, 2, PAL.cyan1);
     // rust drip under the pipe
     R(ctx, ox + 6, oy + 11, 1, 3, PAL.rust2);
@@ -121,17 +120,20 @@ function tileTop(ctx, ox, oy, phase, seed) {
   rivet(ctx, ox + 13, oy + 1);
   // conduit groove
   R(ctx, ox, oy + 3, TS, 1, PAL.metal3);    // groove shadow
-  // pulsing neon strip — phase shifts across variants so runs look like flow
+  // neon strip — 8px period (divides 16) and identical across variants, so any
+  // mix of '#top' variants seams perfectly side-by-side
   for (let x = 0; x < TS; x++) {
-    const k = (x + phase * 5) % 10;
+    const k = x % 8;
     let c;
-    if (k < 4) c = PAL.cyan1;
-    else if (k < 5) c = PAL.cyan0;
-    else if (k < 9) c = PAL.magenta1;
+    if (k < 3) c = PAL.cyan1;
+    else if (k === 3) c = PAL.cyan0;
+    else if (k < 7) c = PAL.magenta1;
     else c = PAL.magenta0;
     P(ctx, ox + x, oy + 4, c);
   }
-  const hotA = (2 + phase * 5) % TS, hotB = (10 + phase * 5) % TS;
+  // pulse: white-hot pixels wander per variant (kept in x 3..12 so the glow
+  // halo below is never clipped flat at the tile seam)
+  const [hotA, hotB] = [[3, 12], [9, 5], [11, 6]][phase];
   P(ctx, ox + hotA, oy + 4, PAL.white);
   P(ctx, ox + hotB, oy + 4, PAL.white);
   R(ctx, ox, oy + 5, TS, 1, PAL.metal2);    // lower lip
@@ -221,11 +223,10 @@ function tileGrate(ctx, ox, oy) {
   P(ctx, ox + 2, oy, PAL.cyan1); P(ctx, ox + 10, oy, PAL.cyan1);
   P(ctx, ox + 5, oy, PAL.rust1); P(ctx, ox + 13, oy, PAL.rust0);
   P(ctx, ox + 6, oy + 2, PAL.rust2); P(ctx, ox + 12, oy + 3, PAL.rust2);
-  // hanger brackets below (sparse, keeps tile one-way readable)
-  R(ctx, ox + 2, oy + 5, 1, 2, PAL.metal3);
-  R(ctx, ox + 13, oy + 5, 1, 2, PAL.metal3);
-  P(ctx, ox + 2, oy + 7, PAL.rust2);
-  P(ctx, ox + 13, oy + 7, PAL.rust2);
+  // tiny hanger studs (1px, keeps the platform within the one-way 5-6px band)
+  P(ctx, ox + 2, oy + 5, PAL.metal3);
+  P(ctx, ox + 13, oy + 5, PAL.metal3);
+  P(ctx, ox + 13, oy + 6, PAL.rust2);
 }
 
 // ---------- '^' — magenta energy vent spikes ----------

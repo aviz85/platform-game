@@ -8,7 +8,7 @@
 //   row 0: #top v0 | #top v1 | #top v2 | # v0 | # v1 | # vein0 | # vein1 | X
 //   row 1: |  | = | ^ | g | c | v | l | r
 
-import { PAL, RAMPS } from './palette.js';
+import { PAL } from './palette.js';
 import { makeCanvas, P, R, line, dither, outline, glow, shade, rng } from './util.js';
 
 const T = 16;
@@ -221,9 +221,11 @@ function tilePlatform(ctx, tx, ty, seed) {
   // levitation shimmer: faint cyan motes just under the slab
   P(ctx, x + 3, y + 7, PAL.cyan2);
   P(ctx, x + 11, y + 8, PAL.cyan3);
-  // one glowing tuft + tiny flower on top
+  // one glowing tuft + tiny flower on top (glow centered at y+2 so the
+  // halo stays inside this 16px cell — at y+1 it bleeds into the sheet
+  // tile above and stains '#top')
   const gx = x + 3 + ((r() * 10) | 0);
-  glow(ctx, gx, y + 1, 2, PAL.cyan1);
+  glow(ctx, gx, y + 2, 2, PAL.cyan1);
   P(ctx, gx, y, PAL.cyan0);
   const fx = x + 2 + ((r() * 12) | 0);
   P(ctx, fx, y, PAL.pink0);
@@ -252,11 +254,12 @@ function tileSpikes(ctx, tx, ty) {
   dither(ctx, x, y + 14, T, 2, PAL.stone3, PAL.shadow);
   R(ctx, x, y + 13, T, 1, PAL.stone3);
   P(ctx, x + 3, y + 13, PAL.stone1); P(ctx, x + 11, y + 13, PAL.stone1);
-  // shards of varying height/lean
+  // shards of varying height/lean — tip x includes the lean offset
+  // (shard() shifts the apex pixel by `lean` at t=0)
   const tips = [];
   tips.push([x + 3, shard(ctx, x + 3, y + 13, 8, 2, 0)]);
-  tips.push([x + 8, shard(ctx, x + 8, y + 13, 12, 2, -1) ]);
-  tips.push([x + 12, shard(ctx, x + 12, y + 13, 6, 2, 1)]);
+  tips.push([x + 7, shard(ctx, x + 8, y + 13, 12, 2, -1)]);
+  tips.push([x + 13, shard(ctx, x + 12, y + 13, 6, 2, 1)]);
   // silhouette pass BEFORE glow so halos stay soft
   outline(ctx, x, y, T, T);
   // inner facet sparkle lines

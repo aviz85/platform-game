@@ -1,8 +1,12 @@
 // AETHERFALL — enemy_crawler: armored beetle-mech ground walker.
 // Ancient stone-metal plated carapace with moss growth, magenta reactor underglow.
 // Sheet layout: row 0 = 'move' (6 frames, tri-leg gait cycle, body bob, antenna wave)
-//               row 1 = 'attack' (4 frames, charge: crouch -> plates flare open exposing
-//                       the magenta core -> galloping charge A/B with motion trail)
+//               row 1 = 'attack' (4 frames, LOOPING charge cycle: plates flared open
+//                       exposing the magenta core, antennae pinned back, legs skittering
+//                       at double cadence, pulsing white-hot eye + streaming motion trail).
+//                       Loop-coherent on purpose — the crawler behavior holds anim='attack'
+//                       across telegraph+charge (~1s = 3 loops), so no one-shot poses here;
+//                       anticipation is acted by the behavior (recoil/shiver/dust).
 // Facing RIGHT. Engine flips via e.facing. Body ~20x14 inside a 26x18 frame.
 import { PAL } from './palette.js';
 import { makeCanvas, P, R, line, outline, glow, shade, frameGrid } from './util.js';
@@ -188,30 +192,29 @@ export function build() {
     });
   }
 
-  // ---- row 1: attack (4 frames) — charge: crouch, plates flare, gallop A/B ----
-  const ATK = [
-    { // 0: anticipation — rock back, crouch, plates crack open
-      dy: 1, lift: 1, core: 0.4, lean: -1, ant: -1, hot: false, jaw: true, trail: 0,
-      near: [{ dx: -2, lift: 0 }, { dx: -1, lift: 0 }, { dx: -2, lift: 0 }],
-      far: [{ dx: -1, lift: 0 }, { dx: -2, lift: 0 }, { dx: -1, lift: 0 }],
-    },
-    { // 1: flare — plates fully open, core white-hot, braced wide
-      dy: 0, lift: 2, core: 1, lean: 0, ant: -1, hot: true, jaw: true, trail: 0,
-      near: [{ dx: -2, lift: 0 }, { dx: 0, lift: 0 }, { dx: 2, lift: 0 }],
-      far: [{ dx: 2, lift: 0 }, { dx: -2, lift: 0 }, { dx: 1, lift: 0 }],
-    },
-    { // 2: charge gallop A — lunging forward, trail streaming
-      dy: 0, lift: 2, core: 1, lean: 1, ant: -1, hot: true, jaw: true, trail: 1,
-      near: [{ dx: 2, lift: 0 }, { dx: -2, lift: 1 }, { dx: 2, lift: 0 }],
-      far: [{ dx: -2, lift: 0 }, { dx: 2, lift: 1 }, { dx: -2, lift: 0 }],
-    },
-    { // 3: charge gallop B — alternate stride
-      dy: 1, lift: 2, core: 1, lean: 1, ant: -1, hot: true, jaw: false, trail: 2,
-      near: [{ dx: -2, lift: 1 }, { dx: 2, lift: 0 }, { dx: -2, lift: 1 }],
-      far: [{ dx: 2, lift: 0 }, { dx: -2, lift: 1 }, { dx: 2, lift: 0 }],
-    },
-  ];
-  for (let f = 0; f < 4; f++) drawCrawler(ctx, f * FW, FH, ATK[f]);
+  // ---- row 1: attack (4 frames) — LOOPING flared skitter-charge ----
+  // Plates locked fully open (lift 2), magenta core exposed and blazing, antennae
+  // pinned back. Legs run the same tri-gait at double cadence (full cycle per loop),
+  // body bounces 0/1/0/1, eye + jaw + trail pulse on alternate frames. Every channel
+  // returns to its frame-0 value after frame 3, so the 3 loops per charge read as
+  // one continuous sprint — no snap-back.
+  const ATK_DY = [0, 1, 0, 1];
+  const ATK_CORE = [0.7, 1, 0.7, 1];
+  for (let f = 0; f < 4; f++) {
+    const near = [], far = [];
+    for (let i = 0; i < 3; i++) {
+      near.push(legPose((f / 4 + i / 3) % 1));
+      far.push(legPose((f / 4 + i / 3 + 0.5) % 1));
+    }
+    drawCrawler(ctx, f * FW, FH, {
+      dy: ATK_DY[f], lift: 2, core: ATK_CORE[f], lean: 0,
+      near, far,
+      ant: -1,
+      hot: f % 2 === 1,
+      jaw: f % 2 === 0,
+      trail: 1 + (f % 2),
+    });
+  }
 
   return {
     image: c,

@@ -235,11 +235,18 @@ export function build() {
   ctx.save();
   ctx.globalAlpha = 0.4;
   const ghost = (cx, topY, rw, depth) => {
+    let jag = 0;
     for (let i = -rw; i <= rw; i++) {
       const t = i / rw;
-      const sy = topY - Math.floor((1 - t * t) * 3);
-      const by = topY + Math.floor(depth * Math.pow(Math.max(0, 1 - Math.abs(t)), 0.55));
+      // roughened canopy line — small runs of jitter instead of a razor edge
+      const sy = topY - Math.floor((1 - t * t) * 3)
+        - ((rnd() < 0.3 ? 1 : 0) + (rnd() < 0.08 ? 1 : 0));
+      jag += (rnd() - 0.5) * 2.4;
+      jag *= 0.75;
+      const by = topY + Math.floor(depth * Math.pow(Math.max(0, 1 - Math.abs(t)), 0.55) + jag);
       for (let y = sy; y <= by; y++) px(cx + i, y, y < sy + 3 ? PAL.skyGlow : PAL.skyLow);
+      if (rnd() < 0.1) px(cx + i, sy - 1, PAL.skyGlow);   // stray canopy tufts
+      if (rnd() < 0.12 && by > sy + 4) px(cx + i, by + 1, PAL.skyLow); // hanging grit
     }
   };
   ghost(45, 78, 52, 34);

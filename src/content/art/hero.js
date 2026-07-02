@@ -255,12 +255,12 @@ export function build() {
   const c = makeCanvas(FW * 8, FH * 7);
   const ctx = c.getContext('2d');
 
-  // ---- row 0: IDLE (4) — breathing, scarf flutter, core pulse, blink -------
+  // ---- row 0: IDLE (4) — breathing, scarf hangs + sways, core pulse, blink --
   const idle = [
-    pose({ scarf: [[11, 17], [9, 18], [7, 18]], pulse: 0 }),
-    pose({ scarf: [[11, 17], [9, 17], [7, 18]], pulse: 0.6, headDy: 0 }),
-    pose({ dy: 1, scarf: [[11, 18], [9, 18], [7, 19]], pulse: 1 }),
-    pose({ scarf: [[11, 17], [9, 18], [7, 17]], pulse: 0.4, blink: true }),
+    pose({ scarf: [[11, 18], [10, 20], [9, 22]], pulse: 0 }),
+    pose({ scarf: [[11, 18], [10, 20], [8, 21]], pulse: 0.6 }),
+    pose({ dy: 1, scarf: [[11, 18], [10, 20], [9, 22]], pulse: 1 }),
+    pose({ scarf: [[11, 18], [9, 20], [8, 22]], pulse: 0.4, blink: true }),
   ];
   idle.forEach((p, i) => drawFrame(ctx, i, 0, p));
 

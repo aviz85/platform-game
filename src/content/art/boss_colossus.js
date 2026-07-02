@@ -45,10 +45,10 @@ function stompFx(ctx, footCx, seed) {
   for (let i = 0; i < 8; i++) {
     const dx = Math.round(r() * 16 - 8);
     const dy = Math.round(r() * 4);
-    P(ctx, footCx + dx, 49 - dy, i % 2 ? PAL.stone1 : PAL.stone0);
+    P(ctx, footCx + dx, 50 - dy, i % 2 ? PAL.stone1 : PAL.stone0);
   }
-  line(ctx, footCx - 5, 49, footCx - 8, 51, PAL.cyan2);
-  line(ctx, footCx + 5, 49, footCx + 8, 51, PAL.cyan2);
+  line(ctx, footCx - 5, 50, footCx - 8, 51, PAL.cyan2);
+  line(ctx, footCx + 5, 50, footCx + 8, 51, PAL.cyan2);
   P(ctx, footCx - 8, 51, PAL.cyan1);
   P(ctx, footCx + 8, 51, PAL.cyan1);
 }
@@ -98,7 +98,7 @@ function buildFrame(p) {
     { x: 27 + q.fwdR, lift: q.liftR, dust: q.dustR, seed: 47 },
   ];
   for (const g of legs) {
-    const foot = 50 - g.lift;
+    const foot = 51 - g.lift; // feet fill to the frame's last row (ground convention, see hero/crawler)
     const top = Math.min(legTop, foot - 7);
     R(ctx, g.x, top, 9, foot - top, PAL.stone2);
     R(ctx, g.x, top, 2, foot - top, PAL.stone1);     // left light
@@ -311,7 +311,7 @@ export function build() {
   const rows = [
     // row 0 — move: heavy stomp-walk. L-impact, settle, R-lift, R-impact, settle, L-lift.
     [
-      { bob: 1, lean: -1, dustL: true, core: 1, swingL: 1, swingR: -1 },
+      { bob: 1, lean: -1, dustL: true, fwdL: 1, core: 1, swingL: 1, swingR: -1 },
       { bob: 0, lean: 0, core: 1 },
       { bob: -1, lean: 1, liftR: 6, fwdR: 2, core: 1, swingL: -1, swingR: 1 },
       { bob: 1, lean: 1, dustR: true, fwdR: 1, core: 2, swingL: -1, swingR: 1 },
@@ -324,7 +324,7 @@ export function build() {
       { bob: -1, fwdL: -1, fwdR: 1, fistL: [8, 14], fistR: [39, 14], core: 1 },
       { bob: -2, fwdL: -1, fwdR: 1, fistL: [16, 5], fistR: [32, 5], core: 2 },
       { bob: 2, fwdL: -1, fwdR: 1, fistL: [17, 28], fistR: [31, 28], core: 2, motion: 'down' },
-      { bob: 3, fwdL: -1, fwdR: 1, fistL: [14, 44], fistR: [34, 44], core: 3, shock: true },
+      { bob: 3, fwdL: -1, fwdR: 1, fistL: [14, 45], fistR: [34, 45], core: 3, shock: true },
       { bob: 2, fwdL: -1, fwdR: 1, fistL: [12, 36], fistR: [36, 36], core: 1 },
     ],
     // row 2 — cast: chest core charges up for the projectile phase.

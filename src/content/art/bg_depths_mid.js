@@ -168,6 +168,65 @@ export function build() {
   };
 
   // ------------------------------------------------------------------
+  // big hull-mounted exhaust fan: metal ring, dark duct interior with a
+  // faint cyan inner light, 4 static blades and a center hub
+  // ------------------------------------------------------------------
+  const fan = (cx, cy, r) => {
+    // duct interior + rim ring
+    for (let j = -r; j <= r; j++) {
+      const w = Math.floor(Math.sqrt(r * r - j * j));
+      hspan(cx - w + 1, cy + j, 2 * w - 1, shade(PAL.void, 0.04));
+      px(cx - w, cy + j, j < 0 ? PAL.metal1 : PAL.metal2);        // lit upper-left rim
+      px(cx + w, cy + j, j < 0 ? PAL.metal2 : metalDeep);         // shaded lower-right rim
+    }
+    hspan(cx - 2, cy - r, 5, PAL.metal1);
+    hspan(cx - 2, cy + r, 5, metalDeep);
+    // faint duct light behind the blades
+    softGlow(cx, cy, Math.max(2, r - 3), PAL.cyan2);
+    // 4 blades (X arrangement)
+    for (let k = 1; k < r - 1; k++) {
+      px(cx + k, cy + k, PAL.metal3); px(cx + k + 1, cy + k, panelDark);
+      px(cx - k, cy - k, PAL.metal2); px(cx - k + 1, cy - k, PAL.metal3);
+      px(cx + k, cy - k, PAL.metal3); px(cx + k, cy - k + 1, panelDark);
+      px(cx - k, cy + k, PAL.metal3); px(cx - k, cy + k + 1, panelDark);
+    }
+    // hub
+    hspan(cx - 1, cy - 1, 3, PAL.metal2);
+    hspan(cx - 1, cy, 3, PAL.metal2);
+    hspan(cx - 1, cy + 1, 3, metalDeep);
+    px(cx - 1, cy - 1, PAL.metal1);
+    // mounting bolts on the ring
+    px(cx - r, cy, PAL.metal0); px(cx + r, cy, PAL.metal1);
+    px(cx, cy - r, PAL.metal0); px(cx, cy + r, PAL.metal2);
+  };
+
+  // ------------------------------------------------------------------
+  // vertical neon glyph sign-strip bolted to a hull face (Kowloon-style):
+  // stacked 3px glyph blocks with hot pixels and a soft halo
+  // ------------------------------------------------------------------
+  const vsign = (x, y0, count, ramp) => {
+    const [c0, c1, c2] = ramp;
+    const h = count * 4 + 1;
+    // backing plate + halo
+    for (let j = -1; j <= h; j++) { px(x - 1, y0 + j, PAL.outline); px(x + 3, y0 + j, PAL.outline); }
+    hspan(x - 1, y0 - 2, 5, PAL.metal2);
+    hspan(x - 1, y0 + h + 1, 5, metalDeep);
+    softGlow(x + 1, y0 + (h >> 1), Math.min(9, 3 + count), c1);
+    for (let k = 0; k < count; k++) {
+      const gy = y0 + k * 4 + 1;
+      const bright = rnd();
+      if (bright < 0.12) {                       // dead/flickering glyph
+        hspan(x, gy, 3, c2); px(x + ((rnd() * 3) | 0), gy + 1, c2);
+        continue;
+      }
+      hspan(x, gy, 3, c1);
+      hspan(x, gy + 1, 3, c2);
+      px(x + ((rnd() * 3) | 0), gy, c0);         // hot pixel
+      if (rnd() < 0.4) px(x + ((rnd() * 3) | 0), gy + 1, c1);
+    }
+  };
+
+  // ------------------------------------------------------------------
   // truss gantry catwalk between two structures, with railing,
   // hazard-tick deck edge and a hanging work lamp mid-span
   // ------------------------------------------------------------------
@@ -373,6 +432,14 @@ export function build() {
   // small warning holo hanging from the back pipe
   px(282, 121, cableCol); px(282, 122, cableCol); px(282, 123, cableCol);
   holo(275, 124, 15, 10, [PAL.amber0, PAL.amber1, PAL.amber2], 0);
+
+  // ---- big exhaust fan on tower B's hull ----
+  fan(228, 172, 9);
+
+  // ---- vertical neon glyph sign-strips on the hull faces ----
+  vsign(112, 110, 8, [PAL.magenta0, PAL.magenta1, PAL.magenta2]); // tower A right flank
+  vsign(560, 158, 6, [PAL.cyan0, PAL.cyan1, PAL.cyan2]);          // squat tower
+  vsign(628, 130, 5, [PAL.amber0, PAL.amber1, PAL.amber2]);       // seam tower
 
   // ---- front pipe runs crossing the whole layer ----
   hpipe(210, 0, W, 4, { neon: [PAL.magenta0, PAL.magenta1, PAL.magenta3], ny: -1, f0: 26 });

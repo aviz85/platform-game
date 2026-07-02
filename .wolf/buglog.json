@@ -1,4 +1,357 @@
 {
   "version": 1,
-  "bugs": []
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-07-02T18:44:30.255Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_mid.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 8→15 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:44:30.255Z"
+    },
+    {
+      "id": "bug-002",
+      "timestamp": "2026-07-02T18:44:37.677Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_ruins_far.js",
+      "root_cause": "No early return/throw for edge case: tw >= 5",
+      "fix": "Added guard clause: if (tw >= 5)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:44:37.677Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-07-02T18:44:56.918Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_ruins_far.js",
+      "root_cause": "7 lines replaced/restructured",
+      "fix": "Rewrote 28→34 lines (7 removed) | Also: // ---- sun glitter path on the nearest cloud tops; for (let i = 0; i < 14; i++) {",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-02T18:45:14.876Z"
+    },
+    {
+      "id": "bug-004",
+      "timestamp": "2026-07-02T18:49:44.887Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_depths_fg.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→4 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:49:44.887Z"
+    },
+    {
+      "id": "bug-005",
+      "timestamp": "2026-07-02T18:50:26.887Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_far.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 14→23 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:50:26.887Z"
+    },
+    {
+      "id": "bug-006",
+      "timestamp": "2026-07-02T18:51:23.644Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/audio/music_forest.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 5→3 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:51:23.644Z"
+    },
+    {
+      "id": "bug-007",
+      "timestamp": "2026-07-02T18:51:37.477Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_near.js",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 9→14 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:51:37.477Z"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-07-02T18:58:00.051Z",
+      "error_message": "Wrong reference: 115 should be 112",
+      "file": "../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/gen_level2.mjs",
+      "root_cause": "Used \"115\" instead of \"112\"",
+      "fix": "Changed 115 → 112",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "mjs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T18:58:00.051Z"
+    },
+    {
+      "id": "bug-009",
+      "timestamp": "2026-07-02T19:01:24.789Z",
+      "error_message": "Wrong reference: false should be true",
+      "file": "src/content/art/enemy_sentinel.js",
+      "root_cause": "Used \"false\" instead of \"true\"",
+      "fix": "Changed false → true",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:01:24.789Z"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-07-02T19:02:42.193Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_crawler.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→7 lines (2 removed) | Also: // ---- row 1: attack (4 frames) — charge: crouch,; const ATK = [",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-02T19:02:53.696Z"
+    },
+    {
+      "id": "bug-011",
+      "timestamp": "2026-07-02T19:03:09.386Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_slime.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 5→6 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:03:09.386Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-07-02T19:03:18.291Z",
+      "error_message": "Null/undefined access in ",
+      "file": "src/content/art/enemy_floater.js",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:03:18.291Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-07-02T19:03:51.682Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_forest.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→5 lines (2 removed) | Also: // shards of varying height/lean; tips.push([x + 8, shard(ctx, x + 8, y + 13, 12, 2,",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-02T19:03:55.034Z"
+    },
+    {
+      "id": "bug-014",
+      "timestamp": "2026-07-02T19:04:22.210Z",
+      "error_message": "Wrong operator: <= should be &&",
+      "file": "../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/pixcheck.mjs",
+      "root_cause": "Used \"<=\" instead of \"&&\"",
+      "fix": "Changed operator <= → &&",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "mjs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:04:22.210Z"
+    },
+    {
+      "id": "bug-015",
+      "timestamp": "2026-07-02T19:04:40.250Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/art/enemy_wraith.js",
+      "root_cause": "Had 'rear'",
+      "fix": "Changed to 'lunge2'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:04:40.250Z"
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-07-02T19:05:03.466Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_depths.js",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 11→14 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:05:03.466Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-07-02T19:06:16.049Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/props_forest.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 5→6 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:06:16.049Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-07-02T19:06:32.961Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/props_ruins.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 9→15 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:06:32.961Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-07-02T19:06:47.613Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/props_ruins.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:06:47.613Z"
+    },
+    {
+      "id": "bug-020",
+      "timestamp": "2026-07-02T19:06:49.594Z",
+      "error_message": "Wrong reference: glow should be greatsword",
+      "file": "src/content/art/props_ruins.js",
+      "root_cause": "Used \"glow\" instead of \"greatsword\"",
+      "fix": "Changed glow → greatsword",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:06:49.594Z"
+    },
+    {
+      "id": "bug-021",
+      "timestamp": "2026-07-02T19:07:46.156Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_ruins.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 3→4 lines (3 removed) | Also: // corroded bronze rosette bolted to the masonry; circleFill(ctx, x + 8, y + 8, 5, VG_LO);",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-02T19:07:57.278Z"
+    },
+    {
+      "id": "bug-022",
+      "timestamp": "2026-07-02T19:08:36.698Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/props_depths.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 6→6 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T19:08:36.699Z"
+    }
+  ]
 }

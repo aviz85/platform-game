@@ -96,7 +96,9 @@ function wraith(ctx, ox, oy, o) {
   const b = o.bob | 0;
   const pose = o.pose;
   const L = pose === 'rear' ? -1 : pose === 'lunge' ? 2 : pose === 'lunge2' ? 3 : pose === 'recover' ? 1 : 0;
-  const hy = b + (pose === 'rear' ? -1 : pose === 'lunge2' ? 1 : 0); // head bob/duck
+  // head bob/duck. rear rises with the body bob only (an extra -1 would push the
+  // hood peak to y=-1 and clip it off the frame top).
+  const hy = b + (pose === 'lunge2' ? 1 : 0);
 
   // ================= wisp tails (behind body) =================
   const roots = [5, 8, 12];

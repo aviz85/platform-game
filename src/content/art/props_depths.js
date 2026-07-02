@@ -85,12 +85,12 @@ function buildReactorCore() {
   const M = RAMPS.metal, C = RAMPS.crystal;
   const cx = 28, cy = 27;
 
-  // heavy base plinth
+  // heavy base plinth (reaches canvas bottom — stamps are bottom-aligned by the engine)
   R(ctx, 8, 52, 40, 8, M[2]);
   R(ctx, 8, 52, 40, 1, M[1]);
-  R(ctx, 8, 59, 40, 1, M[3]);
-  R(ctx, 6, 56, 44, 4, M[3]);
+  R(ctx, 6, 56, 44, 6, M[3]);
   R(ctx, 6, 56, 44, 1, M[2]);
+  R(ctx, 6, 61, 44, 1, shade(PAL.metal3, -0.3));
   hazardStripes(ctx, 12, 53, 32, 3);
   rustPatch(ctx, 9, 56, 10, 3, rand, 0.35);
   rivet(ctx, 8, 57, M); rivet(ctx, 46, 57, M);
@@ -113,8 +113,15 @@ function buildReactorCore() {
   // ring bolts at compass points
   rivet(ctx, cx - 1, cy - 21, M); rivet(ctx, cx - 1, cy + 18, M);
   rivet(ctx, cx - 21, cy - 1, M); rivet(ctx, cx + 18, cy - 1, M);
-  // rust streaks on lower-right of ring
-  rustPatch(ctx, cx + 10, cy + 12, 8, 6, rand, 0.3);
+  // rust streaks on lower-right of ring — clamped to the ring band (r 16..21)
+  for (let j = 0; j < 6; j++) for (let i = 0; i < 8; i++) {
+    const px = cx + 10 + i, py = cy + 12 + j;
+    const dd = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+    const v = rand();
+    if (v < 0.3 && dd >= 16 * 16 && dd <= 21 * 21) {
+      P(ctx, px, py, v < 0.1 ? PAL.rust2 : PAL.rust1);
+    }
+  }
 
   // glow bath inside the cavity
   glow(ctx, cx, cy, 15, PAL.cyan2);
@@ -137,15 +144,15 @@ function buildReactorCore() {
   line(ctx, cx - 6, cy + 3, cx - 2, cy + 6, C[0]);
   line(ctx, cx + 3, cy - 6, cx + 6, cy - 2, C[0]);
 
-  // magenta conduit cables feeding the ring from below
-  line(ctx, 12, 52, 9, 44, PAL.magenta2);
-  line(ctx, 11, 52, 8, 44, PAL.magenta3);
-  P(ctx, 9, 44, PAL.magenta1);
-  line(ctx, 44, 52, 47, 45, PAL.magenta2);
-  line(ctx, 45, 52, 48, 45, PAL.magenta3);
-  P(ctx, 47, 45, PAL.magenta1);
-  statusLight(ctx, 10, 43, PAL.magenta1);
-  statusLight(ctx, 47, 44, PAL.magenta1);
+  // magenta conduit cables feeding the ring from below (endpoints touch the ring)
+  line(ctx, 12, 52, 13, 42, PAL.magenta2);
+  line(ctx, 11, 52, 12, 43, PAL.magenta3);
+  P(ctx, 13, 42, PAL.magenta1);
+  line(ctx, 44, 52, 43, 43, PAL.magenta2);
+  line(ctx, 45, 52, 44, 44, PAL.magenta3);
+  P(ctx, 43, 43, PAL.magenta1);
+  statusLight(ctx, 10, 48, PAL.magenta1);
+  statusLight(ctx, 46, 48, PAL.magenta1);
 
   // core light spill onto plinth
   ctx.save();

@@ -128,3 +128,4 @@
 | 22:08 | Created ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/render_ruins_fg.mjs | — | ~834 |
 | 22:08 | Edited src/content/art/props_depths.js | 9→9 lines | ~115 |
 | 22:09 | Created ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/verify_depths_far.mjs | — | ~1577 |
+| 22:24 | Created tools/integration.mjs | — | ~1587 |

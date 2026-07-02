@@ -1,0 +1,30 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# env & secrets
+.env
+.env.*
+*.pem
+*credentials*
+
+# node
+node_modules/
+
+# OpenWolf — track learning files, ignore session/runtime data
+.wolf/hooks/
+.wolf/token-ledger.json
+.wolf/hooks/_session.json
+.wolf/cron-state.json
+.wolf/designqc-captures/
+.wolf/suggestions.json
+
+# Claude Code local
+.claude/settings.local.json
+
+# scratch
+tmp-*
+.temp/
+*.log

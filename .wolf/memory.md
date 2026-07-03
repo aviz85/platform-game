@@ -391,3 +391,10 @@
 | 14:23 | Created ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/bossdebug.mjs | — | ~868 |
 | 14:25 | Edited tools/reach.mjs | added 3 condition(s) | ~295 |
 | 14:26 | Edited package.json | 4→8 lines | ~101 |
+
+## Session 2026-07-03 — polish pass, jump fix, pause menu, beatability proof (Opus 4.8)
+- Fixed JUMP_V -335->-440 (levels built for 4.5-tile jumps, player only cleared 2.6).
+- Polish workflow: all 50 modules elevated; 4 critic-flagged audio drum fixes (boss/forest kick midi 45->24/28 for full-band thump; depths bass tri->saw; title lub/dub swap).
+- Added Escape pause menu (Resume / Quit to Title) in src/main.js.
+- New verification tools: tools/reach.mjs (BFS reachability + boss-kill sim) proves ALL 6 levels beatable; tools/playthrough.mjs (greedy bot); npm run test/beatable/integration/playthrough.
+- Deployed to Vercel prod (platform-game-silk.vercel.app). Repo still private (pending user gh public).

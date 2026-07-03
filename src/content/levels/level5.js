@@ -10,13 +10,14 @@
 //                    through the shaft, a sentinel holding the top slab.
 //   D (cols 59-95)   upper gauntlet — walkway islands over a full spike pit; a 5-gap,
 //                    a 6-wide DASH gap, then a 5-gap crossing a hazard-striped sentinel
-//                    tower. Recovery grate ladder at cols 74-76 (fall ≠ reset), secret
+//                    tower. Recovery grate ladder at cols 73-76 — a rung at col 73 rejoins
+//                    the NEAR island so a missed gap = retry (fall ≠ reset, no bypass). Secret
 //                    grate ledge at the ceiling (cols 70-71) hiding a heart + shard.
 //   E (cols 93-107)  pipe shaft DOWN — staggered grates break the fall, spikes under
 //                    the first drop, a wraith weaving between grates; low passage out.
 //   F (cols 109-143) final vent corridor — five vent clusters, two hazard-block
 //                    sentinel towers; the heart perch (cols 121-123) is reached by a
-//                    5-wide jump FROM the first tower, past its sentinel.
+//                    5-wide DASH jump FROM the first tower, past its sentinel.
 //   G (cols 144-158) exit chamber — two steps up to the portal pedestal, reactor core
 //                    humming behind the portal.
 //
@@ -45,7 +46,7 @@ export const level = {
     '#.................###########################.............*...l...........................g.................#..................................................#',
     '#.................###########################.........##########.....####......####.....#####...............#..................................................#',
     '#.................###########################..*......##########.....####......####.....#####...............#..................................................#',
-    '#.................###########################.====...........................................#.*............#..................................................#',
+    '#.................###########################.====.......................=...................#.*............#..................................................#',
     '#.................###########################................................................#====..........#..................................................#',
     '#.................###########################.........*......................................#..............#..................................................#',
     '#.................###########################........====.................===................#..............#............*H*...................................#',

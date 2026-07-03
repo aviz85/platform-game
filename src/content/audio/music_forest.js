@@ -3,7 +3,10 @@
 // Form: A (verse, bars 0-7) · A' (verse lift, 8-15) · B (chorus, 16-23) · A'' (verse outro, 24-31)
 // Channels: bouncy triangle bass · square lead melody (phrases + rests) ·
 //           square arp harmony (offbeat plucks in verses, flowing 8th arps in chorus) ·
-//           noise drums (kick/snare/hat by hiss pitch, fills every 8th bar).
+//           triangle counter-melody (tenor call-and-response, sings in the lead's rests) ·
+//           noise drums (kick/snare/hat by hiss pitch; mid-fill every 4 bars, big fill every 8).
+// Dynamics: bar 24 drops drums+arp for one bar after the chorus climax, then the
+//           full kit slams back in at bar 25 for a fresh lift into the outro verse.
 
 const BARS = 32;
 
@@ -29,7 +32,11 @@ const SECT = (bar) => (bar >= 16 && bar < 24 ? 'c' : 'v');
 const bass = [];
 const lead = [];
 const arp = [];
+const counter = []; // warm tenor countermelody — answers the lead in its rests
 const drums = [];
+
+// Counter-line chord tones (low-mid register, always BELOW the lead's 61+).
+const CTONE = { D: [50, 54, 57], A: [49, 52, 57], Bm: [50, 54, 59], G: [47, 50, 55] };
 
 const put = (arr, bar, pat) => { for (const [s, m, l] of pat) arr.push([bar, s, m, l]); };
 
@@ -110,23 +117,65 @@ for (let bar = 0; bar < BARS; bar++) {
   }
 }
 
-// --- drums: kick(45) / snare(78) / hat(96) by hiss pitch ----------------------
+// --- counter: tenor call-and-response — sings in the lead's breathing rests ---
+// Verse core (rel bars, chords D A Bm G D A G A). Answers on the "off" bars
+// (1,3,5) where the lead holds or rests; pedals softly under the busy bars.
+const COUNTER_VERSE = [
+  [0, [[0, 50, 6]]],                              // D pedal under the opening phrase
+  [1, [[4, 49, 2], [8, 52, 2], [10, 57, 4]]],     // A: rising answer into lead's gap
+  [2, [[0, 50, 4]]],                              // Bm: soft hold
+  [3, [[4, 47, 2], [8, 50, 2], [10, 55, 4]]],     // G: rising answer
+  [4, [[0, 54, 4]]],                              // D: hold
+  [5, [[6, 57, 2], [8, 52, 2], [10, 49, 2], [12, 52, 4]]], // A: fills the long rest
+  [6, [[0, 50, 3], [8, 47, 3]]],                  // G
+  [7, [[0, 52, 3], [8, 49, 3], [12, 57, 2]]],     // A: pickup into the repeat
+];
+const placeCounter = (at) => { for (const [rel, pat] of COUNTER_VERSE) put(counter, at + rel, pat); };
+placeCounter(0);   // A
+placeCounter(8);   // A'
+// bar 24 is intentionally left thin (dynamics drop — see below); resume at 26.
+for (const [rel, pat] of COUNTER_VERSE) { if (rel >= 2) put(counter, 24 + rel, pat); }
+// Chorus (16-23) — low sustained harmony thickening the anthem underneath.
+const COUNTER_CHORUS = [
+  [16, [[0, 47, 6], [8, 50, 4]]],   // G
+  [17, [[0, 49, 6], [8, 52, 4]]],   // A
+  [18, [[0, 50, 6], [8, 54, 4]]],   // D
+  [19, [[0, 47, 8]]],               // Bm — long, matching the lead's held bar
+  [20, [[0, 50, 4], [8, 47, 4]]],   // G
+  [21, [[0, 52, 4], [8, 49, 4]]],   // A
+  [22, [[0, 50, 4], [8, 54, 4]]],   // D
+  [23, [[0, 50, 8]]],               // D — big held under the chorus climax
+];
+for (const [bar, pat] of COUNTER_CHORUS) put(counter, bar, pat);
+
+// --- drums: kick(28) / snare(78) / hat(96) by hiss pitch ----------------------
 for (let bar = 0; bar < BARS; bar++) {
-  const fill = bar % 8 === 7; // fill into every new section
+  // Dynamics drop: after the huge chorus (bar 23), bar 24 breathes — no drums,
+  // no arp — letting bass + lead + counter carry, then the full kit slams back
+  // in at bar 25 for a fresh lift into the outro verse.
+  if (bar === 24) continue;
+  const bigFill = bar % 8 === 7; // roll into every new section
+  const midFill = bar % 4 === 3; // lighter mid-phrase fill halfway through
   if (SECT(bar) === 'v') {
-    put(drums, bar, [[0, 45, 1], [4, 78, 1], [6, 96, 1], [8, 45, 1]]);
+    put(drums, bar, [[0, 28, 1], [4, 78, 1], [6, 96, 1], [8, 28, 1]]);
   } else {
     put(drums, bar, [
-      [0, 45, 1], [2, 96, 1], [4, 78, 1], [6, 96, 1],
-      [8, 45, 1], [10, 45, 1],
+      [0, 28, 1], [2, 96, 1], [4, 78, 1], [6, 96, 1],
+      [8, 28, 1], [10, 28, 1],
     ]);
   }
-  if (fill) {
+  // bar 25: re-entry accent — an extra kick to punch the band back in
+  if (bar === 25) put(drums, bar, [[0, 28, 1], [2, 28, 1]]);
+  if (bigFill) {
     put(drums, bar, [[12, 78, 1], [13, 78, 1], [14, 84, 1], [15, 90, 1]]);
+  } else if (midFill) {
+    put(drums, bar, [[12, 78, 1], [13, 84, 1], [15, 90, 1]]);
   } else {
     put(drums, bar, [[12, 78, 1], [14, 96, 1]]);
   }
 }
+// Drop the arp too on bar 24 (dynamics breath) so the re-entry reads clearly.
+for (let i = arp.length - 1; i >= 0; i--) if (arp[i][0] === 24) arp.splice(i, 1);
 
 // -------------------------------------------------------------------- export
 export const track = {
@@ -137,8 +186,9 @@ export const track = {
   loop: true,
   channels: [
     { wave: 'triangle', volume: 0.30, decay: 0.9, pan: 0,    notes: bass },
-    { wave: 'square',   volume: 0.16, decay: 0.8, pan: -0.3, notes: lead },
+    { wave: 'square',   volume: 0.15, decay: 0.8, pan: -0.3, notes: lead },
     { wave: 'square',   volume: 0.10, decay: 0.6, pan: 0.3,  notes: arp },
+    { wave: 'triangle', volume: 0.09, decay: 0.8, pan: 0.15, notes: counter },
     { wave: 'noise',    volume: 0.08, decay: 0.3,            notes: drums },
   ],
 };

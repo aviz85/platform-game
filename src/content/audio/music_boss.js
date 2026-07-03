@@ -1,11 +1,13 @@
 // AETHERFALL — music_boss.js
 // COLOSSUS theme: aggressive, pounding, 150 bpm, E minor/phrygian with tritone (Bb) grit.
 // Form (16 bars): A (0-3) riff+drums establish · A' (4-7) tritone stabs enter, lead motif ·
-//                 B (8-11) harmony shifts G → Bb (tritone), frantic 16th lead runs ·
-//                 C (12-15) climax — everything pounding, chromatic climb into the loop.
+//                 B (8-11) harmony shifts G → Bb (tritone), frantic 16th lead runs;
+//                    bar 11 drops the sub floor under the riser (dynamic breakdown) ·
+//                 C (12-15) climax — sub slams back, the A' hook screams an octave up,
+//                    everything pounding, chromatic climb into the loop.
 // Channels: relentless sawtooth bass riff · triangle sub (octave-down pedal weight) ·
 //           dissonant sawtooth tritone stab dyads (offbeat) · frantic square lead ·
-//           driving noise drums (kick 45 / snare 78 / hat 96) with fills every 4th bar.
+//           driving noise drums (kick 24 / snare 78 / hat 96) with fills every 4th bar.
 
 const BARS = 16;
 
@@ -59,6 +61,10 @@ for (let bar = 0; bar < BARS; bar++) {
 // --- sub: octave-down triangle pedal on the downbeats — floor-shaking weight --
 for (let bar = 0; bar < BARS; bar++) {
   const r = ROOTS[bar] - 12; // E1=28, G1=31, Bb1=34
+  // DYNAMIC DROP: bar 11 is the chromatic riser into the climax — pull the floor
+  // out from under it (drums + rising stabs carry the tension), then bar 12 slams
+  // the sub pedal back in. Drop-then-reintroduce = the climax hits twice as hard.
+  if (bar === 11) continue;
   put(sub, bar, [[0, r, 6], [8, r, 6]]);
   if (bar % 4 === 3) put(sub, bar, [[14, r, 2]]); // pickup thump into the next group
 }
@@ -116,9 +122,10 @@ put(lead, 11, [ // chromatic ladder up — tension bar into the climax
   [0, 70, 1], [2, 71, 1], [4, 72, 1], [6, 73, 1],
   [8, 74, 1], [10, 75, 1], [12, 76, 4],
 ]);
-// C (12-15): high screams, one last tumbling run, rising exit.
-put(lead, 12, [[0, 76, 6], [8, 74, 2], [10, 76, 2], [12, 79, 3]]);
-put(lead, 13, [[0, 79, 4], [8, 76, 2], [10, 74, 2], [12, 70, 2]]);
+// C (12-15): the boss motif RETURNS — restated an octave up as a triumphant scream
+// (the A' hook, now at the top of the register), then one last tumbling run + exit.
+put(lead, 12, [[0, 88, 2], [3, 86, 1], [4, 82, 2], [8, 83, 3], [12, 79, 2]]); // hook +octave
+put(lead, 13, [[0, 88, 2], [3, 86, 1], [4, 82, 2], [8, 83, 4]]);              // hook answer
 put(lead, 14, [ // full-bar frantic descent
   [0, 76, 1], [1, 74, 1], [2, 72, 1], [3, 71, 1],
   [4, 70, 1], [5, 69, 1], [6, 67, 1], [7, 66, 1], [8, 64, 4],
@@ -128,18 +135,18 @@ put(lead, 15, [ // climb with the bass — hands the loop back to bar 0
   [8, 72, 1], [10, 74, 1], [12, 75, 1], [14, 76, 2],
 ]);
 
-// --- drums: four-on-the-floor pound — kick 45, snare 78, hat 96 ---------------
+// --- drums: four-on-the-floor pound — kick 24, snare 78, hat 96 ---------------
 // Fill on every 4th bar (3, 7, 11, 15), each bigger than the last.
 for (let bar = 0; bar < BARS; bar++) {
   const fill = bar % 4 === 3;
   const climax = bar >= 12;
   // backbone: kick 0/8, snare 4/12, offbeat hats
-  put(drums, bar, [[0, 45, 1], [4, 78, 1], [8, 45, 1]]);
+  put(drums, bar, [[0, 24, 1], [4, 78, 1], [8, 24, 1]]);
   if (!fill) put(drums, bar, [[12, 78, 1]]);
   put(drums, bar, [[2, 96, 1], [6, 96, 1], [10, 96, 1]]);
   if (!fill) put(drums, bar, [[14, 96, 1]]);
   // extra kick drive in A' and beyond; double-time hat pings at the climax
-  if (bar >= 4) put(drums, bar, [[10, 45, 1]]);
+  if (bar >= 4) put(drums, bar, [[10, 24, 1]]);
   if (climax && !fill) put(drums, bar, [[7, 96, 1], [15, 96, 1]]);
   if (fill) {
     if (bar === 15) {
@@ -161,7 +168,7 @@ export const track = {
   stepsPerBeat: 4,
   loop: true,
   channels: [
-    { wave: 'sawtooth', volume: 0.24, decay: 0.35, pan: 0,     notes: bass },  // riff
+    { wave: 'sawtooth', volume: 0.28, decay: 0.35, pan: 0,     notes: bass },  // riff
     { wave: 'triangle', volume: 0.22, decay: 0.8,  pan: 0,     notes: sub },   // sub pedal
     { wave: 'sawtooth', volume: 0.11, decay: 0.22, pan: -0.25, notes: stabs }, // tritone stabs
     { wave: 'square',   volume: 0.15, decay: 0.5,  pan: 0.25,  notes: lead },  // frantic lead

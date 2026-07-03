@@ -10,13 +10,17 @@
 //
 // Frame 18x22. Only palette colors + util helpers. Fully deterministic.
 import { PAL } from './palette.js';
-import { makeCanvas, P, outline, glow, frameGrid } from './util.js';
+import { makeCanvas, P, outline, glow, shade, frameGrid } from './util.js';
 
 const FW = 18, FH = 22;
 
 const V0 = PAL.violet0, V1 = PAL.violet1, V2 = PAL.violet2, V3 = PAL.violet3;
 const M0 = PAL.magenta0, M1 = PAL.magenta1, M2 = PAL.magenta2;
 const DK = PAL.deepPurple, VD = PAL.void, SH = PAL.shadow;
+// extra ramp steps for smoother shading (palette-derived via shade())
+const VR = shade(V0, 0.42);   // near-white lavender rim light (upper-left edges)
+const VM = shade(V1, -0.14);  // mid tone between V1 and V2 (anti-banding on robe)
+const WT = PAL.white;         // hottest emissive core
 
 export function build() {
   const c = makeCanvas(FW * 6, FH * 3);
@@ -92,6 +96,19 @@ function wraith(ctx, ox, oy, o) {
     P(ctx, ox + x, oy + y, cc);
   };
   const hl = (x0, x1, y, cc) => { for (let x = x0; x <= x1; x++) px(x, y, cc); };
+  // soft emissive halo, clipped to this frame (never bleeds into adjacent frames)
+  const haze = (cx, cy, r, cc, peak = 0.26) => {
+    ctx.save();
+    for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) {
+      const d = Math.sqrt(xx * xx + yy * yy);
+      if (d > r) continue;
+      const x = (cx + xx) | 0, y = (cy + yy) | 0;
+      if (x < 0 || y < 0 || x >= FW || y >= FH) continue;
+      ctx.globalAlpha = peak * (1 - d / (r + 0.6));
+      P(ctx, ox + x, oy + y, cc);
+    }
+    ctx.restore();
+  };
 
   const b = o.bob | 0;
   const pose = o.pose;
@@ -137,6 +154,11 @@ function wraith(ctx, ox, oy, o) {
   // tail roots
   hl(4, 5, 14 + b, V3); hl(7, 9, 14 + b, V3); hl(11, 12, 14 + b, V3);
   px(8, 14 + b, DK);
+  // rim light — crisp lavender edge on the upper-left lit contour
+  px(3, 9 + b, VR); px(3, 10 + b, VR); px(4, 9 + b, V0);
+  // anti-banding: dither the V2 body into the V3 right-shadow instead of a hard seam
+  for (let ry = 9; ry <= 12; ry++) px(11, ry + b, ((ry + b) & 1) ? VM : V3);
+  px(10, 11 + b, VM); px(10, 12 + b, VM); // soften fold-shadow edge
   // chest rune base (emissive core added after outline)
   px(8, 11 + b, M2); px(9, 11 + b, M2);
 
@@ -159,6 +181,9 @@ function wraith(ctx, ox, oy, o) {
   px(4 + L, hy + 8, V2); px(5 + L, hy + 8, V2);
   hl(6 + L, 11 + L, hy + 8, DK);
   px(12 + L, hy + 8, V3);
+  // hood rim light — trace the upper-left lit contour a step brighter
+  px(7 + L, hy + 2, VR); px(6 + L, hy + 3, VR);
+  px(5 + L, hy + 4, VR); px(4 + L, hy + 5, VR);
 
   // ================= arms / claws =================
   if (pose === 'rear') {
@@ -186,7 +211,8 @@ function wraith(ctx, ox, oy, o) {
   // ================= emissive pass (after outline: glows, hot pixels) =================
   const ex1 = 7 + L, ex2 = 10 + L, ey = hy + 7;
   if (o.eye === 0) {
-    // dim embers, no halo
+    // dim embers — still smoldering while phased: faint clipped halo, no hard outline glow
+    haze(ex1, ey, 1, M2, 0.45); haze(ex2, ey, 1, M2, 0.45);
     ep(ex1, ey, M2); ep(ex2, ey, M2);
   } else if (o.eye === 1) {
     glow(ctx, ox + ex1, oy + ey, 2, M1);
@@ -194,30 +220,36 @@ function wraith(ctx, ox, oy, o) {
     ep(ex1, ey, M0); ep(ex2, ey, M0);
     ep(ex1, ey + 1, M2); ep(ex2, ey + 1, M2); // under-eye smolder
   } else {
-    // attack flare — wide burning eyes
+    // attack flare — wide burning eyes with a white-hot core
     glow(ctx, ox + ex1, oy + ey, 3, M1);
     glow(ctx, ox + ex2 + 1, oy + ey, 3, M1);
-    ep(ex1, ey, M0); ep(ex1 + 1, ey, M1);
-    ep(ex2, ey, M0); ep(ex2 + 1, ey, M1);
+    haze(ex1, ey, 2, M0, 0.3); haze(ex2 + 1, ey, 2, M0, 0.3);
+    ep(ex1, ey, WT); ep(ex1 + 1, ey, M1);
+    ep(ex2, ey, WT); ep(ex2 + 1, ey, M1);
+    ep(ex1, ey + 1, M2); ep(ex2 + 1, ey + 1, M2);
   }
 
   // chest rune core
   if (o.eye > 0) {
     glow(ctx, ox + 8, oy + 11 + b, 2, M1);
     ep(8, 11 + b, M1); ep(9, 11 + b, M0);
+    if (o.eye === 2) { haze(8, 11 + b, 2, M0, 0.32); ep(8, 11 + b, WT); } // flares with the lunge
   }
 
-  // claw tips ignite magenta on the lunge
+  // claw tips ignite magenta on the lunge (clipped haze so it never bleeds off-frame)
   if (pose === 'lunge' || pose === 'lunge2') {
+    haze(16, 6 + b, 2, M1, 0.3); haze(16, 9 + b, 2, M1, 0.3); haze(16, 11 + b, 2, M1, 0.28);
     ep(17, 5 + b, M1); ep(17, 8 + b, M1); ep(17, 11 + b, M1);
-    ep(16, 7 + b, M0);
+    ep(16, 7 + b, M0); ep(16, 6 + b, WT); // white-hot lead claw
   }
   if (pose === 'rear') {
+    haze(1 + L, hy + 3, 1, M1, 0.4); haze(15 + L, hy + 3, 1, M1, 0.4);
     ep(1 + L, hy + 3, M2); ep(15 + L, hy + 3, M2); // claw sparks
   }
 
-  // slash arc on full extension
+  // slash arc on full extension — trailing magenta crescent with a soft haze wake
   if (pose === 'lunge2') {
+    haze(16, 8 + b, 2, M0, 0.3); haze(15, 4 + b, 1, M1, 0.28); haze(15, 12 + b, 1, M1, 0.28);
     ep(14, 2 + b, M2); ep(15, 3 + b, M1); ep(16, 5 + b, M1);
     ep(17, 8 + b, M0); ep(16, 11 + b, M1); ep(15, 13 + b, M1);
     ep(14, 15 + b, M2);
@@ -229,6 +261,10 @@ function wraith(ctx, ox, oy, o) {
     ep(2, 9 + ((t * 2) % 5) + b, V3);
     ep(1, 12 - (t % 3) + b, DK);
     ep(2, 15 + (t % 3) + b, SH);
-    if (t % 2 === 0) ep(3, 6 + (t % 4) + b, M2); // stray ember mote
+    if (t % 2 === 0) {
+      const my = 6 + (t % 4) + b;
+      haze(3, my, 1, M2, 0.35);   // stray ember mote gets a faint glow
+      ep(3, my, M1);
+    }
   }
 }

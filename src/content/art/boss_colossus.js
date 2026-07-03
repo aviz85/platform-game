@@ -4,11 +4,29 @@
 // Sheet layout: row0 move(6, heavy stomp) · row1 attack(6, overhead slam)
 //               row2 cast(4, core flare)  · row3 hurt(2, flinch)
 import { PAL } from './palette.js';
-import { makeCanvas, P, R, line, outline, glow, rng, frameGrid } from './util.js';
+import { makeCanvas, P, R, line, dither, outline, glow, rng, frameGrid } from './util.js';
 
 const FW = 48, FH = 52;
 
 // ---- small helpers ----------------------------------------------------------
+
+// cool ambient back-rim: tint the shadow-side (right/bottom) silhouette edges just
+// inside the outline, so the stone body separates from dark backgrounds and reads
+// as lit by the crystal glow around it. Run BEFORE outline().
+function rimLight(ctx, w, h, color, alpha = 0.33) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const solid = (i, j) => i >= 0 && j >= 0 && i < w && j < h && d[(j * w + i) * 4 + 3] > 10;
+  const marks = [];
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    if (solid(i, j) && (!solid(i + 1, j) || !solid(i, j + 1))) marks.push([i, j]);
+  }
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  for (const [i, j] of marks) ctx.fillRect(i, j, 1, 1);
+  ctx.restore();
+}
 
 // chunky "stone limb": stamp w×w blocks along a line
 function limb(ctx, x0, y0, x1, y1, w, c) {
@@ -149,6 +167,9 @@ function buildFrame(p) {
   R(ctx, 26 + L, sh + 3, 10, 1, PAL.stone0);
   R(ctx, 12 + L, sh + 8, 10, 1, PAL.stone3);
   R(ctx, 26 + L, sh + 8, 10, 1, PAL.stone3);
+  // anti-banding: dither the chest-to-waist tone break instead of a hard edge
+  dither(ctx, 11 + L, sh + 9, 26, 1, PAL.stone2, PAL.stone3);
+  dither(ctx, 12 + L, sh + 1, 24, 1, PAL.stone0, PAL.stone1); // soften top highlight
   // weathering specks (deterministic, ride with the body)
   const tr = rng(5);
   for (let i = 0; i < 10; i++) {
@@ -259,7 +280,8 @@ function buildFrame(p) {
   fist(ctx, fL[0], fL[1], -1, runeC, runeHot);
   fist(ctx, fR[0], fR[1], 1, runeC, runeHot);
 
-  // ---- outline the whole guardian ----
+  // ---- cool ambient back-rim, then outline the whole guardian ----
+  rimLight(ctx, FW, FH, PAL.violet0, q.core >= 2 ? 0.42 : 0.32);
   outline(ctx, 0, 0, FW, FH);
 
   // ---- post-outline fx (never outlined) ----
@@ -267,6 +289,22 @@ function buildFrame(p) {
   glow(ctx, 21 + L, hy + 4, 2, eyeC);
   glow(ctx, 26 + L, hy + 4, 2, eyeC);
   glow(ctx, ccx, ccy, 2 + q.core, q.core >= 3 ? PAL.gold0 : PAL.amber0);
+  // violet crystal accents (crown crest + both pauldron spikes)
+  glow(ctx, 23 + L, hy - 2, 2, PAL.violet0);
+  glow(ctx, 8 + L, sh - 4, 2, PAL.violet1);
+  glow(ctx, 38 + L, sh - 4, 2, PAL.violet1);
+  // cyan rune studs (belt keystones)
+  glow(ctx, 18 + L, sh + 21, 1, PAL.cyan1);
+  glow(ctx, 29 + L, sh + 21, 1, PAL.cyan1);
+  // ankle rune sparks ride each foot (dim when a leg is lifted mid-stride)
+  glow(ctx, 16 + q.fwdL, 46 - q.liftL, 1, PAL.cyan1);
+  glow(ctx, 31 + q.fwdR, 46 - q.liftR, 1, PAL.cyan1);
+  // rune-vein tips pulse with the core charge
+  const veinR = q.core >= 2 ? 2 : 1;
+  glow(ctx, ccx - 6, ccy + 5, veinR, runeHot);
+  glow(ctx, ccx + 6, ccy + 5, veinR, runeHot);
+  glow(ctx, ccx - 4, ccy - 5, veinR, runeHot);
+  glow(ctx, ccx + 4, ccy - 5, veinR, runeHot);
   if (q.rays) {
     line(ctx, ccx - 7, ccy, ccx - 10, ccy, PAL.gold0);
     line(ctx, ccx + 7, ccy, ccx + 10, ccy, PAL.gold0);

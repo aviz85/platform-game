@@ -55,14 +55,15 @@ const rTop = (x) =>
   4 * Math.sin(TAU * (5 * x) / W + 2.1) +
   3 * Math.sin(TAU * (9 * x) / W + 4.4);
 
-// soft wind-torn cloud wisp (alpha-blended, wrapped)
+// soft wind-torn cloud wisp (alpha-blended, wrapped). Alpha feathers per row so the
+// top/bottom edges dissolve into mist instead of reading as a hard-edged strip.
 function wisp(ctx, cx, cy, len, th, col, a, rr) {
   ctx.save();
-  ctx.globalAlpha = a;
   for (let j = -th; j <= th; j++) {
     const f = Math.max(0, 1 - (j * j) / (th * th + 0.2));
     const wRow = Math.round(len * Math.sqrt(f) * (0.82 + rr() * 0.32));
     const drift = Math.round((rr() - 0.5) * 6) + (j < 0 ? j * 2 : j); // top blown leeward
+    ctx.globalAlpha = a * (0.30 + 0.70 * f);   // core rows opaque, fringes fade to nothing
     WR(ctx, cx - wRow / 2 + drift, Math.round(cy) + j, wRow, 1, col);
   }
   ctx.restore();
@@ -122,6 +123,7 @@ function statueGuardian(ctx, cx, gy) {
   glow(ctx, cx, shoulderY - 3, 4, PAL.cyan3);
   WP(ctx, cx - 2, shoulderY - 4, C.glyph);
   WP(ctx, cx + 1, shoulderY - 4, C.glyphHot);
+  WP(ctx, cx + 1, shoulderY - 4, PAL.cyan0); // hot core — a spark of life left in the stone
   // hands clasped at chest on the sword
   WR(ctx, cx - 1, shoulderY + 5, 3, 2, C.base2);
   // crossguard + blade running down to the pedestal
@@ -184,6 +186,7 @@ function statueSentinel(ctx, cx, gy) {
   WR(ctx, cx - 9, topY - 6, 3, 3, PAL.cyan3);
   WP(ctx, cx - 9, topY - 6, C.glyph);
   WP(ctx, cx - 8, topY - 6, C.glyphHot);
+  WP(ctx, cx - 8, topY - 5, PAL.cyan0); // hot core of the last-carried light
   glow(ctx, cx - 8, topY - 5, 5, PAL.cyan3);
   // waist crack
   WP(ctx, cx - 1, topY + 14, C.crack);
@@ -397,6 +400,7 @@ export function build() {
       WP(ctx, kx + kw - 1, ky + kh - 1, C.dark);
       if (runed) {
         WP(ctx, kx + Math.floor(kw / 2), ky + Math.floor(kh / 2), C.glyphHot);
+        WP(ctx, kx + Math.floor(kw / 2), ky + Math.floor(kh / 2) - 1, PAL.cyan0); // hot core
         glow(ctx, kx + Math.floor(kw / 2), ky + Math.floor(kh / 2), 3, PAL.cyan3);
       }
     };
@@ -461,6 +465,7 @@ export function build() {
     WP(ctx, 446, 125, C.glyph);
     WP(ctx, 448, 125, C.glyphHot);
     WP(ctx, 447, 126, C.glyph);
+    WP(ctx, 447, 125, PAL.cyan0); // hot core of the ward-sigil
     glow(ctx, 447, 125, 4, PAL.cyan3);
   }
 
@@ -506,6 +511,7 @@ export function build() {
     WP(ctx, gx, gy + 3, C.glyphHot);
     WP(ctx, gx, gy + 6, C.glyph);
     WP(ctx, gx + 1, gy + 3, C.glyph);
+    WP(ctx, gx, gy + 3, PAL.cyan0); // flickering hot core of the ward
   }
   ctx.restore();
   glow(ctx, 122, 141, 4, PAL.cyan3);
@@ -519,18 +525,28 @@ export function build() {
       i % 2 ? C.cloudC : C.cloudA, 0.11 + fr() * 0.06, fr);
   }
 
+  // ============ atmospheric AO: the wall dissolves into the mist at its base ==========
+  // Graded dither (full width => seamless) darkens the flat masonry toward the cloudline,
+  // killing the banding of the plain C.base3 fill and grounding the rampart in the sea.
+  dither(ctx, 0, 226, W, 8, C.base3, shade(C.base3, -0.14));
+  dither(ctx, 0, 234, W, 9, C.base3, shade(C.base3, -0.32));
+  dither(ctx, 0, 243, W, 10, shade(C.base3, -0.34), C.dark);
+
   // ================= cloud sea licking the base of the wall =================
   const cr = rng(555);
   for (let i = 0; i < 9; i++) {
     wisp(ctx, cr() * W, 246 + cr() * 16, 90 + cr() * 130, 4 + Math.round(cr() * 4),
       i % 2 ? C.cloudA : C.cloudB, 0.15 + cr() * 0.1, cr);
   }
-  // dense periodic band at the very bottom (sines divide W => seamless)
+  // dense periodic band at the very bottom (sines divide W => seamless).
+  // Per-row alpha ramp: wispy at the crest, thick and opaque at the very bottom.
   ctx.save();
-  ctx.globalAlpha = 0.22;
   for (let x = 0; x < W; x++) {
     const hh = Math.round(7 + 4 * Math.sin(TAU * 3 * x / W) + 3 * Math.sin(TAU * 7 * x / W + 2));
-    R(ctx, x, H - hh, 1, hh, C.cloudB);
+    for (let k = 0; k < hh; k++) {
+      ctx.globalAlpha = 0.10 + 0.26 * (k / Math.max(1, hh - 1)); // fade in from the crest down
+      P(ctx, x, H - hh + k, k > hh - 3 ? C.cloudA : C.cloudB);   // brightest froth at the base
+    }
   }
   ctx.restore();
 

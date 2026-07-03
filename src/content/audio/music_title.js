@@ -52,10 +52,20 @@ for (let bar = 0; bar < BARS; bar++) {
   }
 
   // --- noise heartbeat: lub-dub, entering at bar 2 ---
-  if (bar >= 2) {
-    perc.push([bar, 0, 45, 1]);   // lub  (low thump)
-    perc.push([bar, 3, 38, 1]);   // dub  (lower, softer feel via pitch)
+  // Dynamic drop: the heartbeat holds its breath at bar 20 (start of the final A''),
+  // then returns at bar 21 — a beat of stillness before the melody's last rise.
+  if (bar >= 2 && bar !== 20) {
+    perc.push([bar, 0, 34, 1]);   // lub  (accent — low midi = full-band thump, carries the body)
+    perc.push([bar, 3, 46, 1]);   // dub  (offbeat — higher midi = lighter/thinner, so the accent leads)
     if (inB) perc.push([bar, 8, 85, 1]); // faint high tick lifts the B section
+  }
+
+  // --- drum fill every 4 bars: a soft rising tick roll pulls into the next phrase ---
+  if (bar % 4 === 3) {
+    perc.push([bar, 10, 66, 1]);
+    perc.push([bar, 12, 74, 1]);
+    perc.push([bar, 14, 82, 1]);
+    perc.push([bar, 15, 90, 1]);
   }
 }
 
@@ -94,7 +104,7 @@ export const track = {
   stepsPerBeat: 4,
   loop: true,
   channels: [
-    { wave: 'triangle', volume: 0.26, decay: 1.1,  pan:  0,    notes: bass },    // deep roots
+    { wave: 'triangle', volume: 0.30, decay: 1.1,  pan:  0,    notes: bass },    // deep roots
     { wave: 'triangle', volume: 0.20, decay: 0.9,  pan: -0.15, notes: arp },     // arpeggiated chords
     { wave: 'square',   volume: 0.15, decay: 0.85, pan: -0.25, notes: lead },    // airy lead (bar 8+)
     { wave: 'square',   volume: 0.08, decay: 0.5,  pan:  0.3,  notes: shimmer }, // distant sparkle

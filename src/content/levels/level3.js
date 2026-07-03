@@ -41,7 +41,7 @@ put(10, 13, 'r'); put(12, 13, 'v');
 // ---- 2. Broken bridge (cols 15-46) ----------------------------------------
 hrow(15, 19, 14, '#');               // deck 1 (off the terrace)
 hrow(23, 26, 14, '#');               // deck 2 — 3-wide gap before it
-hrow(31, 34, 14, '#');               // deck 3 — 4-wide gap, spike hop on top
+hrow(31, 35, 14, '#');               // deck 3 — 4-wide gap in; spike hop with a fair 2-tile takeoff pad (34-35)
 put(33, 13, '^');
 box(39, 14, 46, 15, '#');            // landing isle — 4-wide leap to reach
 put(17, 13, 'g'); put(24, 13, 'g'); put(41, 13, 'g'); put(45, 13, 'c');
@@ -51,8 +51,8 @@ hrow(49, 51, 12, '#');               // stone 1  (+2)
 hrow(54, 55, 10, '#');               // stone 2  (+2)
 hrow(58, 60,  8, '#');               // stone 3  (+2)
 hrow(63, 65,  8, '=');               // bronze beam onto the rampart
-hrow(44, 45,  9, '#');               // SECRET slab (jump back-left from stone 1)
-put(44, 8, 'H');
+hrow(45, 46,  9, '#');               // SECRET slab — fair back-left hop off stone 1 (+3 up / 3 left); [47,10] shard baits it
+put(45, 8, 'H');
 
 // ---- 4. High rampart (cols 66-92) ------------------------------------------
 box(66, 8, 92, 9, '#');
@@ -117,10 +117,13 @@ export const level = {
     { stamp: 'bridge_arch',      x: 35,  y: 17 },
     { stamp: 'tower_broken',     x: 43,  y: 13 },
     { stamp: 'floating_masonry', x: 47,  y: 16 },
+    { stamp: 'banner_pole',      x: 66,  y: 7  },  // rampart gate — frames the setpiece entrance
     { stamp: 'banner_pole',      x: 71,  y: 7  },
     { stamp: 'brazier_column',   x: 86,  y: 7  },
     { stamp: 'banner_pole',      x: 89,  y: 7  },
+    { stamp: 'floating_masonry', x: 88,  y: 16 },  // drifting ruin under the rampart — cloud-sea depth
     { stamp: 'floating_masonry', x: 105, y: 16 },
+    { stamp: 'floating_masonry', x: 116, y: 16 },  // depth under the finale gaps
     { stamp: 'floating_masonry', x: 126, y: 15 },
     { stamp: 'tower_broken',     x: 137, y: 12 },
     { stamp: 'guardian_statue',  x: 149, y: 12 },

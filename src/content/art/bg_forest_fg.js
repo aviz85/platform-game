@@ -19,6 +19,8 @@ export function build() {
   const SIL = PAL.outline;            // #1a1030 body
   const SIL_D = PAL.void;             // #0b0716 shaded (lower-right)
   const SIL_L = PAL.deepPurple;       // #241537 lit (upper-left)
+  const SIL_LL = PAL.shadow;          // #2e2149 brightest silhouette step (fuller ramp)
+  const SIL_RAMP = [SIL_LL, SIL_L, SIL, SIL_D]; // lit -> shaded, 4 steps
   const RIM = PAL.cyan3;              // faint cyan rim
   const RIM_B = PAL.cyan2;            // rare brighter rim sparkle
   const RIM_HOT = PAL.cyan1;          // crystal hot tip
@@ -34,6 +36,18 @@ export function build() {
     ctx.globalAlpha = a;
     px(x, y, col);
     ctx.globalAlpha = 1;
+  };
+  // wrap-safe radial glow (util glow() isn't seam-safe near x=0/W) — kept dim
+  // so emissive halos never veil the gameplay behind this front layer
+  const softGlow = (cx, cy, r, col, a0) => {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > r) continue;
+        const a = a0 * (1 - d / r);
+        if (a > 0.02) pxA(cx + dx, cy + dy, col, a);
+      }
+    }
   };
 
   // ============================================================
@@ -53,8 +67,12 @@ export function build() {
       const y = H - 1 - j;
       px(x, y, j === h - 1 ? SIL : (j < 1 ? SIL_D : SIL));
     }
-    // whisper of rim light catching a few crest pixels
-    if (rnd() < 0.05) pxA(x, H - h - 1, RIM, 0.3);
+    // whisper of rim light catching a few crest pixels, with a dithered
+    // 1px falloff below so the light-catch reads as a gradient, not a band
+    if (rnd() < 0.06) {
+      pxA(x, H - h - 1, RIM, 0.32);
+      if ((x & 1) === 0) pxA(x, H - h, RIM, 0.12);
+    }
   }
 
   // scattered grass blades rising from the fringe
@@ -125,9 +143,17 @@ export function build() {
       const t = (y - tipY) / hgt;
       const cxr = tipX + (baseX - tipX) * t;
       const w = Math.max(0, Math.round(halfW * Math.pow(t, 0.72)));
+      const span = 2 * w || 1;
       for (let dx = -w; dx <= w; dx++) {
-        const col = dx <= -w + 1 ? SIL_L : (dx >= w - 1 ? SIL_D : SIL);
-        px(cxr + dx, y, col);
+        // fuller lit->shaded ramp across the facet width (light from upper-left)
+        const fi = ((dx + w) / span) * (SIL_RAMP.length - 1);
+        let idx = Math.round(fi);
+        const frac = fi - Math.floor(fi);
+        // ordered dither in the transition band so ramp steps never band
+        if (frac > 0.32 && frac < 0.68) {
+          idx = ((Math.round(cxr) + dx + y) & 1) ? Math.floor(fi) : Math.ceil(fi);
+        }
+        px(cxr + dx, y, SIL_RAMP[Math.max(0, Math.min(SIL_RAMP.length - 1, idx))]);
       }
       leftEdge.push([Math.round(cxr) - w, y]);
     }
@@ -142,8 +168,10 @@ export function build() {
       if (rnd() < 0.7) pxA(x, y, RIM, 0.5);
       if (rnd() < 0.08) pxA(x, y, RIM_B, 0.4);
     }
-    // hot tip + one-pixel inner glow (kept dim — it's a silhouette)
-    pxA(tipX, tipY, RIM_HOT, 0.65);
+    // emissive halo + hot tip (kept dim — it's a silhouette, must not veil play)
+    softGlow(tipX, tipY, 3, RIM, 0.16);
+    softGlow(tipX, tipY, 2, RIM_B, 0.12);
+    pxA(tipX, tipY, RIM_HOT, 0.7);
     pxA(tipX, tipY + 1, RIM_B, 0.5);
     pxA(tipX, tipY + 2, RIM, 0.4);
   }
@@ -257,11 +285,11 @@ export function build() {
   for (let i = 0; i < 7; i++) {
     const fx = Math.floor(rnd() * W);
     const fy = TOPLIMIT + 12 + Math.floor(rnd() * 52);
-    pxA(fx, fy, RIM_HOT, 0.45);
-    pxA(fx + 1, fy, RIM, 0.15);
-    pxA(fx - 1, fy, RIM, 0.15);
-    pxA(fx, fy + 1, RIM, 0.15);
-    pxA(fx, fy - 1, RIM, 0.15);
+    const warm = rnd() < 0.4;                 // most cyan, a few warm amber embers
+    const core = warm ? PAL.amber0 : RIM_HOT;
+    const halo = warm ? PAL.amber1 : RIM;
+    softGlow(fx, fy, 3, halo, 0.14);          // seam-safe emissive bloom
+    pxA(fx, fy, core, 0.55);
   }
 
   // a hair of extra depth: darken the extreme bottom row so the layer

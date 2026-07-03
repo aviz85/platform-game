@@ -15,6 +15,20 @@ export function build() {
 
   const wrapX = (x) => (((Math.round(x)) % W) + W) % W;
   const px = (x, y, col) => { y = Math.round(y); if (y >= 0 && y < H) P(ctx, wrapX(x), y, col); };
+  // seam-safe soft bloom (px() wraps X, so this never clips at the tile seam,
+  // unlike util's glow()/circleFill which draw un-wrapped). For tiny distant lights.
+  const farGlow = (x, y, r, col, a = 0.2) => {
+    ctx.save();
+    ctx.globalAlpha = a;
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 > r * r) continue;
+      px(x + dx, y + dy, col);
+    }
+    ctx.globalAlpha = Math.min(1, a * 2);
+    px(x - 1, y, col); px(x + 1, y, col); px(x, y - 1, col); px(x, y + 1, col);
+    ctx.restore();
+  };
 
   // 4x4 Bayer ordered-dither threshold in 0..1 — pattern period 4 divides 480,
   // so the dithering itself tiles seamlessly across the wrap seam.
@@ -252,11 +266,25 @@ export function build() {
   island(212, 17, 7, 12, 220, frontFill, frontRim, 66);
   island(330, 26, 11, 17, 223, frontFill, frontRim, 77);
   island(470, 29, 10, 18, 221, frontFill, frontRim, 88); // wraps across the seam
-  // faraway life: a few crystal glints and one warm lantern on the front isles
+  // faraway life: crystal glints + warm lanterns of the lost civilization. Each
+  // emissive point gets a faint atmospheric bloom (seam-safe farGlow) so it reads
+  // as a light hanging in hazy distance rather than a stray pixel.
+  // -- front isles (a touch brighter)
+  farGlow(330, 211, 3, PAL.cyan2, 0.2);
   px(330, 211, PAL.cyan1); px(324, 213, PAL.cyan2); px(331, 210, PAL.cyan0);
+  farGlow(98, 212, 2, PAL.cyan2, 0.18);
   px(98, 212, PAL.cyan2); px(99, 211, PAL.cyan1);
+  farGlow(470, 210, 3, PAL.amber1, 0.2);       // wraps the seam — px()-based bloom stays clean
   px(470, 210, PAL.amber1); px(470, 209, PAL.amber0);
+  farGlow(212, 214, 2, PAL.amber1, 0.16);
   px(212, 214, PAL.amber1);
+  // -- back isles: dimmer, hazier pinpricks for depth
+  farGlow(262, 214, 2, PAL.cyan3, 0.12);
+  px(262, 214, PAL.cyan2); px(268, 213, PAL.cyan3);
+  farGlow(152, 211, 2, PAL.amber2, 0.11);
+  px(152, 211, PAL.amber1);
+  farGlow(40, 213, 2, PAL.cyan3, 0.1);
+  px(41, 213, PAL.cyan2);
 
   // ------------------------------------------------ foreground haze (over isles)
   ctx.globalAlpha = 0.3;

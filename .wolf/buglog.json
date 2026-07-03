@@ -371,6 +371,934 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-03T05:30:49.699Z"
+    },
+    {
+      "id": "bug-024",
+      "timestamp": "2026-07-03T05:48:59.400Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/enemy_wraith.js",
+      "root_cause": "No early return/throw for edge case: d > r",
+      "fix": "Added guard clause: if (d > r)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:48:59.400Z"
+    },
+    {
+      "id": "bug-025",
+      "timestamp": "2026-07-03T05:49:13.946Z",
+      "error_message": "Wrong condition in logic",
+      "file": "src/content/art/enemy_floater.js",
+      "root_cause": "Condition was: if (flare >= 1)",
+      "fix": "Changed to: if (bright > 0.4)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:49:13.946Z"
+    },
+    {
+      "id": "bug-026",
+      "timestamp": "2026-07-03T05:49:18.533Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_drone.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 10→18 lines (3 removed) | Also: eyeHot: i % 3 === 0 ? PAL.white : PAL.cyan0,; eyeGlowC: PAL.cyan1, eyeGlowR: 2,",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:49:39.523Z"
+    },
+    {
+      "id": "bug-027",
+      "timestamp": "2026-07-03T05:50:00.074Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_wraith.js",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 16→19 lines (4 removed) | Also: // claw tips ignite magenta on the lunge; ep(16, 7 + b, M0);",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:50:16.279Z"
+    },
+    {
+      "id": "bug-028",
+      "timestamp": "2026-07-03T05:50:11.694Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_slime.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 7→11 lines (2 removed) | Also: if (u < 0.22) col = PAL.cyan1;                    ; else if (u > 0.74) col = ((i + j) & 1) ? PAL.leaf2 | Also: const c = makeCanvas(FW * 6, FH * 2);; // hop cycle: rest -> anticipation crouch -> launc",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-07-03T05:51:09.204Z"
+    },
+    {
+      "id": "bug-029",
+      "timestamp": "2026-07-03T05:50:31.505Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/enemy_crawler.js",
+      "root_cause": "8 lines replaced/restructured",
+      "fix": "Rewrote 20→24 lines (8 removed) | Also: const ATK_DY = [0, 1, 0, 1];; const ATK_CORE = [0.7, 1, 0.7, 1];",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:50:44.771Z"
+    },
+    {
+      "id": "bug-030",
+      "timestamp": "2026-07-03T05:50:42.781Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/hero.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 14→42 lines (2 removed) | Also: pose({ scarf: [[11, 18], [10, 20], [9, 22]], pulse; pose({ scarf: [[11, 18], [10, 20], [8, 21]], pulse",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:51:48.069Z"
+    },
+    {
+      "id": "bug-031",
+      "timestamp": "2026-07-03T05:50:56.067Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/tiles_forest.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: // tall blades poking up past the turf line — brightest tip ; if (i === 0) { glow(ctx, bx, y, 2, PAL.leaf1); P(ctx, bx, y,",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:51:06.120Z"
+    },
+    {
+      "id": "bug-032",
+      "timestamp": "2026-07-03T05:51:15.802Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_forest.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 8→14 lines (2 removed) | Also: // bright core beads along the vein; P(ctx, pts[i][0], pts[i][1], i % 2 ? PAL.cyan2 : P",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:51:30.614Z"
+    },
+    {
+      "id": "bug-033",
+      "timestamp": "2026-07-03T05:51:38.233Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/hero.js",
+      "root_cause": "No early return/throw for edge case: a.fade",
+      "fix": "Added guard clause: if (a.fade)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:51:38.233Z"
+    },
+    {
+      "id": "bug-034",
+      "timestamp": "2026-07-03T05:52:06.204Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_depths.js",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 39→62 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:52:06.204Z"
+    },
+    {
+      "id": "bug-035",
+      "timestamp": "2026-07-03T05:52:17.043Z",
+      "error_message": "Missing error handling in mossRun",
+      "file": "src/content/art/props_forest.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: // sparkle glints on facets (4-point twinkle: hot core + sof; const twinkle = (gx, gy, col) => { | Also: // rim light: cool ambient catch along the hood/shoulder con; rimLight(ctx, 0, 0, W, H, PAL.stone0, 0.45);",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-07-03T05:53:51.588Z"
+    },
+    {
+      "id": "bug-036",
+      "timestamp": "2026-07-03T05:52:22.679Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/tiles_ruins.js",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 6→14 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:52:22.679Z"
+    },
+    {
+      "id": "bug-037",
+      "timestamp": "2026-07-03T05:52:26.221Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/props_forest.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 6→13 lines (3 removed) | Also: // glow pass (over outline, soft); strands.forEach(([sx, sy, len], i) => glow(ctx, sx | Also: glow(ctx, 13, 17, 6, PAL.amber0);; glow(ctx, 13, 17, 3, PAL.gold0);",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-07-03T05:54:25.343Z"
+    },
+    {
+      "id": "bug-038",
+      "timestamp": "2026-07-03T05:52:47.883Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/props_depths.js",
+      "root_cause": "9 lines replaced/restructured",
+      "fix": "Rewrote 20→39 lines (9 removed) | Also: // magenta neon conduit snaking across the wall pl; P(ctx, 11, 22, PAL.magenta1); P(ctx, 11, 28, PAL.m | Also: // sparking innards; P(ctx, bx - 2, by + 2, PAL.magenta1); | Also: glow(ctx, 10, 31, 3, PAL.cyan1);      // live eye; P(ctx, 11, 31, PAL.cyan1);",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-07-03T05:53:22.585Z"
+    },
+    {
+      "id": "bug-039",
+      "timestamp": "2026-07-03T05:52:52.012Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_forest_far.js",
+      "root_cause": "No early return/throw for edge case: y >= 0 && y < H",
+      "fix": "Added guard clause: if (y >= 0 && y < H)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:52:52.012Z"
+    },
+    {
+      "id": "bug-040",
+      "timestamp": "2026-07-03T05:53:12.888Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/props_ruins.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: // warm sunset rim on the right pauldron silhouette; for (let y = 28; y <= 32; y++) P(ctx, 26, y, shade(PAL.amber",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:53:22.084Z"
+    },
+    {
+      "id": "bug-041",
+      "timestamp": "2026-07-03T05:54:08.104Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_forest_fg.js",
+      "root_cause": "No early return/throw for edge case: d > r",
+      "fix": "Added guard clause: if (d > r)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:08.104Z"
+    },
+    {
+      "id": "bug-042",
+      "timestamp": "2026-07-03T05:54:12.202Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_near.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 7→16 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:12.202Z"
+    },
+    {
+      "id": "bug-043",
+      "timestamp": "2026-07-03T05:54:21.689Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_mid.js",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 11→21 lines (4 removed) | Also: // fireflies — faint biolum motes drifting between; for (let i = 0; i < 16; i++) {",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:54:51.515Z"
+    },
+    {
+      "id": "bug-044",
+      "timestamp": "2026-07-03T05:54:36.735Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/bg_forest_mid.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:36.735Z"
+    },
+    {
+      "id": "bug-045",
+      "timestamp": "2026-07-03T05:54:39.596Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_ruins_far.js",
+      "root_cause": "No early return/throw for edge case: frac > 0.42 && keep < 2",
+      "fix": "Added guard clause: if (frac > 0.42 && keep < 2)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:39.596Z"
+    },
+    {
+      "id": "bug-046",
+      "timestamp": "2026-07-03T05:54:43.638Z",
+      "error_message": "Wrong reference: hazeStreaks should be sunRays",
+      "file": "src/content/art/bg_ruins_far.js",
+      "root_cause": "Used \"hazeStreaks\" instead of \"sunRays\"",
+      "fix": "Changed hazeStreaks → sunRays",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:43.638Z"
+    },
+    {
+      "id": "bug-047",
+      "timestamp": "2026-07-03T05:54:51.709Z",
+      "error_message": "Wrong operator: >= should be &&",
+      "file": "src/content/art/bg_forest_fg.js",
+      "root_cause": "Used \">=\" instead of \"&&\"",
+      "fix": "Changed operator >= → &&",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:54:51.709Z"
+    },
+    {
+      "id": "bug-048",
+      "timestamp": "2026-07-03T05:54:58.265Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_forest_fg.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 4→6 lines (2 removed) | Also: pxA(fx, fy, RIM_HOT, 0.45);; pxA(fx + 1, fy, RIM, 0.15);",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:55:06.096Z"
+    },
+    {
+      "id": "bug-049",
+      "timestamp": "2026-07-03T05:55:16.047Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_ruins_near.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 12→13 lines (2 removed) | Also: // dense periodic band at the very bottom (sines d; ctx.globalAlpha = 0.22;",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:56:45.429Z"
+    },
+    {
+      "id": "bug-050",
+      "timestamp": "2026-07-03T05:55:16.836Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_ruins_fg.js",
+      "root_cause": "No early return/throw for edge case: d > r",
+      "fix": "Added guard clause: if (d > r)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:55:16.836Z"
+    },
+    {
+      "id": "bug-051",
+      "timestamp": "2026-07-03T05:55:25.092Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_ruins_fg.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 4→8 lines (2 removed) | Also: // deep base fading to void at the screen edge; px(x, y, ((x + y) & 1) ? PAL.void : PAL.deepPurple",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:55:32.503Z"
+    },
+    {
+      "id": "bug-052",
+      "timestamp": "2026-07-03T05:55:40.100Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/bg_ruins_fg.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:55:40.100Z"
+    },
+    {
+      "id": "bug-053",
+      "timestamp": "2026-07-03T05:56:02.177Z",
+      "error_message": "Wrong operator: >= should be ===",
+      "file": "src/content/art/bg_ruins_mid.js",
+      "root_cause": "Used \">=\" instead of \"===\"",
+      "fix": "Changed operator >= → ===",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:56:02.177Z"
+    },
+    {
+      "id": "bug-054",
+      "timestamp": "2026-07-03T05:56:08.668Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_depths_mid.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 6→17 lines (2 removed) | Also: // distant pipe gallery; for (let x = 0; x < W; x++) { px(x, 158, PAL.metal",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:56:15.096Z"
+    },
+    {
+      "id": "bug-055",
+      "timestamp": "2026-07-03T05:56:09.754Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/bg_ruins_mid.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:56:09.754Z"
+    },
+    {
+      "id": "bug-056",
+      "timestamp": "2026-07-03T05:56:10.214Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/bg_depths_far.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: // upper-left rim light on the housing silhouette; for (let i = -6; i <= 6; i++) px(cx0 + i, cy0 - 3, i < 0 ? s",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:56:19.261Z"
+    },
+    {
+      "id": "bug-057",
+      "timestamp": "2026-07-03T05:56:55.132Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/fx_particles.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: // f0 — tight round puff, lit from upper-left (catch-light o; [3, 2, GH], [4, 2, G0],                         // rim highl",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:57:15.447Z"
+    },
+    {
+      "id": "bug-058",
+      "timestamp": "2026-07-03T05:57:03.749Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/fx_particles.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 16→18 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:57:03.749Z"
+    },
+    {
+      "id": "bug-059",
+      "timestamp": "2026-07-03T05:57:10.822Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/art/bg_depths_fg.js",
+      "root_cause": "No early return/throw for edge case: n < 0.14",
+      "fix": "Added guard clause: if (n < 0.14)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:57:10.822Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-07-03T05:57:23.149Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/bg_depths_near.js",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 9→14 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:57:23.149Z"
+    },
+    {
+      "id": "bug-061",
+      "timestamp": "2026-07-03T05:58:19.625Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/audio/sfx.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 3→4 lines (3 removed) | Also: // Shard pickup: triple sparkle — each blip chirps; // a glittering micro-arpeggio. High register = cr",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:58:41.344Z"
+    },
+    {
+      "id": "bug-062",
+      "timestamp": "2026-07-03T05:58:35.092Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/collectibles.js",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 22→33 lines (4 removed) | Also: function drawHeartShape(ctx, ox, oy, spans, w) {; let col = PAL.pink1;                              ",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T05:58:58.980Z"
+    },
+    {
+      "id": "bug-063",
+      "timestamp": "2026-07-03T05:59:11.066Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/portal.js",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 22→34 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:59:11.066Z"
+    },
+    {
+      "id": "bug-064",
+      "timestamp": "2026-07-03T06:00:07.843Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/art/ui_kit.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 7→9 lines (3 removed) | Also: // Icon stamps — 9x9, drawn from color-coded pixel; function stamp(w, h, rows, colors, post) {",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T06:00:55.415Z"
+    },
+    {
+      "id": "bug-065",
+      "timestamp": "2026-07-03T06:00:17.350Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/audio/music_ruins.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 15→24 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:00:17.350Z"
+    },
+    {
+      "id": "bug-066",
+      "timestamp": "2026-07-03T06:00:22.453Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "src/content/art/title_art.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:00:22.453Z"
+    },
+    {
+      "id": "bug-067",
+      "timestamp": "2026-07-03T06:00:47.905Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/audio/music_forest.js",
+      "root_cause": "No early return/throw for edge case: bar === 24",
+      "fix": "Added guard clause: if (bar === 24)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:00:47.905Z"
+    },
+    {
+      "id": "bug-068",
+      "timestamp": "2026-07-03T06:01:07.676Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/audio/music_boss.js",
+      "root_cause": "No early return/throw for edge case: bar === 11",
+      "fix": "Added guard clause: if (bar === 11)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:01:07.676Z"
+    },
+    {
+      "id": "bug-069",
+      "timestamp": "2026-07-03T06:01:24.309Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/audio/music_boss.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 3→4 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:01:24.309Z"
+    },
+    {
+      "id": "bug-070",
+      "timestamp": "2026-07-03T06:01:52.695Z",
+      "error_message": "Missing guard clause",
+      "file": "src/content/audio/music_depths.js",
+      "root_cause": "No early return/throw for edge case: bar === 16 && s < 8",
+      "fix": "Added guard clause: if (bar === 16 && s < 8)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:01:52.695Z"
+    },
+    {
+      "id": "bug-071",
+      "timestamp": "2026-07-03T06:06:07.590Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/behaviors/drone.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 18→39 lines (2 removed) | Also: e.facing = world.dirToPlayer(e);; // anticipation: lift slightly while shuddering si | Also: e.vx = m.tx;; e.vy = m.ty; | Also: // a readable 0.55s telegraph (rears up, shudders,; // swoop dive at the player's locked position. The",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-07-03T06:07:52.770Z"
+    },
+    {
+      "id": "bug-072",
+      "timestamp": "2026-07-03T06:07:52.392Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/levels/level3.js",
+      "root_cause": "Had ');               // deck 3 — 4-wide gap, spike ho",
+      "fix": "Changed to ');               // deck 3 — 4-wide gap in; spike",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T06:08:00.232Z"
+    },
+    {
+      "id": "bug-073",
+      "timestamp": "2026-07-03T06:08:15.830Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/levels/level1.js",
+      "root_cause": "Had '#.................lg.g....g*g*.g..g..gcg.....g.g.",
+      "fix": "Changed to '#.................lg.g....g*g*.g..g..gcg.....g.g.",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:08:15.830Z"
+    },
+    {
+      "id": "bug-074",
+      "timestamp": "2026-07-03T06:09:16.886Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/levels/level6.js",
+      "root_cause": "Had '##.....*........H...##...........................",
+      "fix": "Changed to '##.....*........H...##..*........................",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:09:16.886Z"
+    },
+    {
+      "id": "bug-075",
+      "timestamp": "2026-07-03T06:10:42.239Z",
+      "error_message": "Wrong operator: === should be <=",
+      "file": "src/content/behaviors/sentinel.js",
+      "root_cause": "Used \"===\" instead of \"<=\"",
+      "fix": "Changed operator === → <=",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:10:42.239Z"
+    },
+    {
+      "id": "bug-076",
+      "timestamp": "2026-07-03T06:10:56.866Z",
+      "error_message": "Wrong condition in logic",
+      "file": "src/content/behaviors/sentinel.js",
+      "root_cause": "Condition was: if (m.stateT < 0.3 && (m.stateT * 60 | 0)",
+      "fix": "Changed to: if (m.stateT < 0.35 && m.ventT <= 0)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:10:56.866Z"
+    },
+    {
+      "id": "bug-077",
+      "timestamp": "2026-07-03T06:13:18.778Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/behaviors/boss_colossus.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 10→13 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:13:18.778Z"
+    },
+    {
+      "id": "bug-078",
+      "timestamp": "2026-07-03T06:13:40.561Z",
+      "error_message": "Significant refactor of ",
+      "file": "src/content/behaviors/slime.js",
+      "root_cause": "9 lines replaced/restructured",
+      "fix": "Rewrote 14→18 lines (9 removed) | Also: e.animT = F_SPLAT;                              //; if (m.t >= (m.pounce ? LAND_POUNCE_T : LAND_T)) {",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-03T06:14:32.721Z"
+    },
+    {
+      "id": "bug-079",
+      "timestamp": "2026-07-03T06:14:34.406Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/levels/level2.js",
+      "root_cause": "Had '.................................................",
+      "fix": "Changed to '.................................................",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:14:34.406Z"
+    },
+    {
+      "id": "bug-080",
+      "timestamp": "2026-07-03T06:25:43.051Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/levels/level5.js",
+      "root_cause": "Had '#.................###########################.===",
+      "fix": "Changed to '#.................###########################.===",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T06:25:43.051Z"
+    },
+    {
+      "id": "bug-081",
+      "timestamp": "2026-07-03T07:02:30.069Z",
+      "error_message": "Incorrect value in code",
+      "file": "src/content/audio/music_depths.js",
+      "root_cause": "Had 'triangle'",
+      "fix": "Changed to 'sawtooth'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T07:02:30.069Z"
     }
   ]
 }

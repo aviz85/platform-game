@@ -112,16 +112,21 @@ function tileRock(ctx, ox, oy, seed, extra) {
 }
 
 // ---------- '#top' — riveted plate + neon conduit strip ----------
+// conduit colour keyed to an 8px period (divides 16) — identical across every
+// variant so any mix of '#top' tiles seams perfectly side-by-side.
+const conduitHot = (x) => { const k = x % 8; return k < 4 ? PAL.cyan1 : PAL.magenta1; };
+const conduitDim = (x) => { const k = x % 8; return k < 4 ? PAL.cyan3 : PAL.magenta3; };
 function tileTop(ctx, ox, oy, phase, seed) {
-  // metal deck plate (light from top)
-  R(ctx, ox, oy, TS, 1, PAL.metal0);        // lit walk edge
-  R(ctx, ox, oy + 1, TS, 2, PAL.metal1);    // plate face
+  // metal deck plate (light from top) — rim-lit walk edge, anti-banded face
+  R(ctx, ox, oy, TS, 1, PAL.metal0);        // lit walk edge (rim light)
+  R(ctx, ox, oy + 1, TS, 1, PAL.metal1);    // plate face — upper (lit)
+  dither(ctx, ox, oy + 2, TS, 1, PAL.metal1, PAL.metal2); // face lower — anti-band ramp
   rivet(ctx, ox + 2, oy + 1);
   rivet(ctx, ox + 13, oy + 1);
   // conduit groove
   R(ctx, ox, oy + 3, TS, 1, PAL.metal3);    // groove shadow
-  // neon strip — 8px period (divides 16) and identical across variants, so any
-  // mix of '#top' variants seams perfectly side-by-side
+  R(ctx, ox, oy + 5, TS, 1, PAL.metal2);    // lower lip
+  // neon strip core
   for (let x = 0; x < TS; x++) {
     const k = x % 8;
     let c;
@@ -131,12 +136,30 @@ function tileTop(ctx, ox, oy, phase, seed) {
     else c = PAL.magenta0;
     P(ctx, ox + x, oy + 4, c);
   }
+  // emissive bleed: the conduit spills a dim wash up into the groove and down
+  // onto the lip (period-locked → still seams), so the strip reads as light not paint
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  for (let x = 0; x < TS; x++) {
+    const dc = conduitDim(x);
+    P(ctx, ox + x, oy + 3, dc);
+    P(ctx, ox + x, oy + 5, dc);
+  }
+  ctx.restore();
   // pulse: white-hot pixels wander per variant (kept in x 3..12 so the glow
   // halo below is never clipped flat at the tile seam)
   const [hotA, hotB] = [[3, 12], [9, 5], [11, 6]][phase];
   P(ctx, ox + hotA, oy + 4, PAL.white);
   P(ctx, ox + hotB, oy + 4, PAL.white);
-  R(ctx, ox, oy + 5, TS, 1, PAL.metal2);    // lower lip
+  // vertical bloom streaks off each hot pixel — the pulse blooms into the metal
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  P(ctx, ox + hotA, oy + 3, PAL.cyan0); P(ctx, ox + hotA, oy + 5, PAL.cyan0);
+  P(ctx, ox + hotB, oy + 3, PAL.magenta0); P(ctx, ox + hotB, oy + 5, PAL.magenta0);
+  ctx.globalAlpha = 0.22;
+  P(ctx, ox + hotA, oy + 2, PAL.cyan0); P(ctx, ox + hotA, oy + 6, PAL.cyan1);
+  P(ctx, ox + hotB, oy + 2, PAL.magenta0); P(ctx, ox + hotB, oy + 6, PAL.magenta1);
+  ctx.restore();
   dither(ctx, ox, oy + 6, TS, 1, PAL.metal3, ROCK2); // plate-to-rock transition
   // rock body underneath
   rockFill(ctx, ox, oy, seed, 7);
@@ -180,6 +203,8 @@ function tileHazardBlock(ctx, ox, oy) {
   P(ctx, ox + 12, oy + 7, PAL.rust1); P(ctx, ox + 4, oy + 9, PAL.rust2);
   P(ctx, ox + 5, oy + 13, PAL.rust1); P(ctx, ox + 6, oy + 13, PAL.rust2);
   line(ctx, ox + 8, oy + 13, ox + 11, oy + 13, PAL.metal1);
+  // faint warm bloom so the hazard band reads as a live warning marking
+  glow(ctx, ox + 8, oy + 7, 3, PAL.amber1);
 }
 
 // ---------- '|' — riveted support strut ----------

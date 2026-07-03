@@ -55,6 +55,7 @@ export const behavior = {
     e.mem.lungeCd = 0;
     e.mem.trailT  = r() * TRAIL_PERIOD;
     e.mem.lx = 0; e.mem.ly = 0;              // locked lunge direction
+    e.mem.prevHit = 0;                       // last frame's e.hitT — detect a fresh strike
     e.anim = 'move';
   },
 
@@ -67,6 +68,29 @@ export const behavior = {
     const dist = world.distToPlayer(e);
     // aim at the player's chest, not the feet — it looms
     const tx = p.x, ty = p.y - p.h * 0.6;
+
+    // ---------------- HIT REACTION (personality via e.hitT) ----------------
+    // The engine stamps e.hitT = 0.25 the instant the player's blade lands, then
+    // ticks it down; a rising edge is a fresh strike this frame. The wraith
+    // flinches spectrally — snaps DIM (a flicker out of the world), sheds a burst
+    // of cold motes, and takes a recoil impulse away from the blade that decays
+    // naturally through the velocity easing below. A strike landed mid-wind-up or
+    // mid-rake STAGGERS it straight into a retreat, so a well-timed blade is
+    // rewarded and this wall-phasing ghost always stays fair to fight.
+    const hitNow = (e.hitT || 0) > (m.prevHit || 0) + 1e-4;
+    m.prevHit = e.hitT || 0;
+    if (hitNow) {
+      const away = -(world.dirToPlayer(e) || e.facing || 1);
+      e.vx += away * 128;                    // spectral recoil, eased away over ~0.4s
+      e.vy -= 72;                            // wafts upward as it flinches
+      m.dim = true;                          // flicker half-real on the hit
+      m.phaseT = Math.max(m.phaseT, 0.16);   // hold the flicker a beat
+      world.spawnParticles('orb',   e.x, e.y - e.h * 0.5, 6, { speed: 50, life: 0.4 });
+      world.spawnParticles('spark', e.x, e.y - e.h * 0.5, 4, { speed: 58, life: 0.24 });
+      if (m.state === 'telegraph' || m.state === 'lunge') {
+        this._startRetreat(e, world);        // staggered out of its strike
+      }
+    }
 
     // ---------------- breath cycle: manifest <-> phased ----------------
     // (frozen mid-strike so the attack is always fully visible & readable)

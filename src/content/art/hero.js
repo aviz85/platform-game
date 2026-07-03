@@ -7,7 +7,7 @@
 // Anchor: feet-center (16, 32).
 
 import { PAL } from './palette.js';
-import { makeCanvas, P, R, line, outline, glow, shade, frameGrid } from './util.js';
+import { makeCanvas, P, R, line, dither, outline, glow, shade, frameGrid } from './util.js';
 
 const FW = 32, FH = 32;
 
@@ -67,11 +67,22 @@ function pose(over = {}) {
 // ---------------------------------------------------------------------------
 function drawScarf(ctx, ox, oy, p) {
   const cols = [C.scarf, C.scarfHi, C.scarfSh];
-  p.scarf.forEach(([sx, sy], i) => {
+  const sc = p.scarf;
+  sc.forEach(([sx, sy], i) => {
     const x = ox + sx + p.lean, y = oy + sy + p.dy;
     R(ctx, x, y, 2, 2, cols[Math.min(i, 2)]);
     P(ctx, x, y, i === 0 ? C.scarfHi : C.scarf); // top-left catch-light
+    P(ctx, x + 1, y + 1, C.scarfSh);             // underside fold shadow (form)
   });
+  // trailing wisp: a tapered 2px tail that lags in the cloth's travel direction
+  const n = sc.length;
+  if (n >= 2) {
+    const [ax, ay] = sc[n - 2], [bx, by] = sc[n - 1];
+    const dx = Math.sign(bx - ax) || -1, dy = Math.sign(by - ay);
+    const tx = ox + bx + p.lean + dx, tyv = oy + by + p.dy + dy;
+    P(ctx, tx, tyv, C.scarf);
+    P(ctx, tx + dx, tyv + dy, C.scarfSh);
+  }
   // knot at the neck
   R(ctx, ox + 12 + p.lean, oy + 17 + p.dy, 3, 2, C.scarf);
   P(ctx, ox + 12 + p.lean, oy + 17 + p.dy, C.scarfHi);
@@ -101,6 +112,8 @@ function drawTorso(ctx, ox, oy, p) {
   R(ctx, tx, ty, tw, 7, C.suit);
   // chest plate
   R(ctx, tx + 1, ty + 1, tw - 2, 3, C.suitHi);
+  // anti-banding: soften the chest-plate -> mid-suit transition
+  dither(ctx, tx + 1, ty + 4, tw - 2, 1, C.suitHi, C.suit);
   // upper-left light
   R(ctx, tx, ty, 2, 1, C.suitLt);
   P(ctx, tx, ty + 1, C.suitLt);
@@ -181,35 +194,74 @@ function drawBlade(ctx, ox, oy, b) {
 
 function drawArc(ctx, ox, oy, a) {
   // slash trail — drawn AFTER outline so it stays pure light
-  const steps = Math.max(6, Math.round(Math.abs(a.a1 - a.a0) * a.r));
+  const cx0 = ox + a.cx, cy0 = oy + a.cy;
+  const steps = Math.max(8, Math.round(Math.abs(a.a1 - a.a0) * a.r * 1.2));
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const ang = a.a0 + (a.a1 - a.a0) * t;
-    const px = ox + a.cx + Math.round(Math.cos(ang) * a.r);
-    const py = oy + a.cy + Math.round(Math.sin(ang) * a.r);
-    if (a.fade && (i % 3 !== 0)) continue;    // dissipating trail
-    P(ctx, px, py, C.blade);
-    if (!a.fade) {
-      const ix = ox + a.cx + Math.round(Math.cos(ang) * (a.r - 1));
-      const iy = oy + a.cy + Math.round(Math.sin(ang) * (a.r - 1));
-      P(ctx, ix, iy, t > 0.55 ? C.bladeCore : PAL.cyan2);
-      if (i === steps || i === steps - 2) P(ctx, px, py, C.white);
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    if (a.fade) {                              // dissipating trail — thin & sparse
+      if (i % 3 !== 0) continue;
+      P(ctx, cx0 + Math.round(ca * a.r), cy0 + Math.round(sa * a.r), C.blade);
+      P(ctx, cx0 + Math.round(ca * (a.r - 1)), cy0 + Math.round(sa * (a.r - 1)), PAL.cyan2);
+      continue;
+    }
+    // full-bright swept band: soft outer -> bright edge -> hot core -> inner falloff
+    const outX = cx0 + Math.round(ca * (a.r + 1)), outY = cy0 + Math.round(sa * (a.r + 1));
+    const edX = cx0 + Math.round(ca * a.r),        edY = cy0 + Math.round(sa * a.r);
+    const coX = cx0 + Math.round(ca * (a.r - 1)),  coY = cy0 + Math.round(sa * (a.r - 1));
+    const inX = cx0 + Math.round(ca * (a.r - 2)),  inY = cy0 + Math.round(sa * (a.r - 2));
+    P(ctx, outX, outY, PAL.cyan2);
+    P(ctx, edX, edY, C.blade);
+    P(ctx, coX, coY, t > 0.4 ? C.bladeCore : C.blade);
+    P(ctx, inX, inY, t > 0.6 ? PAL.cyan2 : PAL.cyan3);
+    if (i >= steps - 2) {                      // white-hot leading tip
+      P(ctx, edX, edY, C.white);
+      P(ctx, coX, coY, C.white);
     }
   }
 }
 
 function drawStreaks(ctx, ox, oy, p) {
-  // dash motion lines behind the body
+  // dash motion — trailing smear + speed lines + leading-edge pop
   ctx.save();
-  ctx.globalAlpha = 0.55;
   const off = p.streaks === 2 ? 1 : 0;
+  // soft afterimage smear behind the body (translucent, left of torso)
+  ctx.globalAlpha = 0.16;
+  R(ctx, ox + 0, oy + 15 + p.dy, 9, 9, PAL.cyan2);
+  ctx.globalAlpha = 0.24;
+  R(ctx, ox + 2, oy + 16 + p.dy, 6, 7, PAL.cyan1);
+  // graduated speed lines
+  ctx.globalAlpha = 0.55;
   R(ctx, ox + 1 + off, oy + 14 + p.dy, 7 - off * 2, 1, PAL.cyan1);
   R(ctx, ox + 3 - off, oy + 18 + p.dy, 8, 1, C.helmHi);
   R(ctx, ox + 1 + off, oy + 22 + p.dy, 6 + off, 1, PAL.cyan1);
   R(ctx, ox + 4, oy + 26, 5 - off, 1, PAL.cyan2);
-  ctx.globalAlpha = 0.85;
+  R(ctx, ox + 2 + off, oy + 16 + p.dy, 5, 1, PAL.cyan0);
+  R(ctx, ox + 2, oy + 20 + p.dy, 6 - off, 1, C.helmHi);
+  ctx.globalAlpha = 0.9;
   P(ctx, ox + 8 + off, oy + 18 + p.dy, C.white);
   P(ctx, ox + 6 - off, oy + 14 + p.dy, PAL.cyan0);
+  // leading-edge cut-through-air pop, ahead of the lunge
+  P(ctx, ox + 26, oy + 18 + p.dy, C.white);
+  P(ctx, ox + 27, oy + 19 + p.dy, PAL.cyan0);
+  ctx.restore();
+}
+
+// backlit rim: tint the lower-right silhouette edge a cool light so the sprite
+// pops off the background (call AFTER outline; no-op under the node validator stub)
+function rimLight(ctx, x, y, w, h, color, alpha = 0.38) {
+  const img = ctx.getImageData(x, y, w, h);
+  const d = img.data;
+  const solid = (i, j) => i >= 0 && j >= 0 && i < w && j < h && d[(j * w + i) * 4 + 3] > 10;
+  const marks = [];
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    if (solid(i, j) && (!solid(i + 1, j) || !solid(i, j + 1))) marks.push([i, j]);
+  }
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  for (const [i, j] of marks) ctx.fillRect(x + i, y + j, 1, 1);
   ctx.restore();
 }
 
@@ -232,6 +284,8 @@ function drawFrame(ctx, col, row, p) {
 
   // 1px dark-purple outline around everything opaque so far
   outline(ctx, ox, oy, FW, FH);
+  // cool backlit rim on the lower-right silhouette edge
+  rimLight(ctx, ox, oy, FW, FH, PAL.cyan1, p.hurt ? 0.3 : 0.4);
 
   // pure-light passes (never outlined)
   if (p.arc) drawArc(ctx, ox, oy, p.arc);
@@ -242,6 +296,7 @@ function drawFrame(ctx, col, row, p) {
   const cx = 16 + p.lean;
   glow(ctx, ox + cx, oy + ty + 2, 2 + Math.round(p.pulse), PAL.cyan1);           // chest core
   if (!p.blink) glow(ctx, ox + cx + 1, oy + 13 + p.dy + p.headDy, 2, p.hurt ? PAL.ember1 : PAL.cyan1); // visor
+  glow(ctx, ox + 11 + p.lean, oy + 8 + p.dy + p.headDy, 1, p.hurt ? PAL.ember1 : PAL.cyan1); // antenna stud
   if (p.blade) {
     glow(ctx, ox + p.blade.x1, oy + p.blade.y1, 3, PAL.cyan1);
     glow(ctx, ox + ((p.blade.x0 + p.blade.x1) >> 1), oy + ((p.blade.y0 + p.blade.y1) >> 1), 2, PAL.cyan1);
@@ -257,10 +312,10 @@ export function build() {
 
   // ---- row 0: IDLE (4) — breathing, scarf hangs + sways, core pulse, blink --
   const idle = [
-    pose({ scarf: [[11, 18], [10, 20], [9, 22]], pulse: 0 }),
-    pose({ scarf: [[11, 18], [10, 20], [8, 21]], pulse: 0.6 }),
-    pose({ dy: 1, scarf: [[11, 18], [10, 20], [9, 22]], pulse: 1 }),
-    pose({ scarf: [[11, 18], [9, 20], [8, 22]], pulse: 0.4, blink: true }),
+    pose({ dy: 0, headDy: 0, scarf: [[11, 18], [10, 20], [9, 22]], pulse: 0.2 }),  // rest
+    pose({ dy: 0, headDy: 0, scarf: [[11, 18], [10, 20], [8, 21]], pulse: 0.6 }),  // breath in
+    pose({ dy: 1, headDy: 1, scarf: [[11, 19], [10, 21], [9, 23]], pulse: 1 }),    // settle (exhale)
+    pose({ dy: 0, headDy: 0, scarf: [[11, 18], [9, 20], [8, 22]], pulse: 0.4, blink: true }), // rise + blink
   ];
   idle.forEach((p, i) => drawFrame(ctx, i, 0, p));
 
@@ -268,11 +323,13 @@ export function build() {
   const xo = [5, 3, 0, -4, -5, -3, 0, 4];          // foot A offset
   const lift = [0, 0, 0, 0, 0, 3, 4, 2];            // foot A lift
   const bobs = [1, 0, -1, 0, 1, 0, -1, 0];
+  const nod  = [1, 0, 0, 0, 1, 0, 0, 0];            // head weight-dip at foot contact
   for (let i = 0; i < 8; i++) {
     const j = (i + 4) % 8;
     const swing = Math.round(xo[i] * 0.8);
     const p = pose({
       dy: bobs[i],
+      headDy: nod[i],
       lean: 2,
       feet: [
         { x: 16 + xo[i] - 2, y: 30 - lift[i] },     // back leg (A)
@@ -284,7 +341,7 @@ export function build() {
       scarf: (i & 1)
         ? [[10, 17], [7, 16], [5, 17]]
         : [[10, 17], [7, 18], [5, 16]],
-      pulse: 0.5,
+      pulse: 0.4 + 0.35 * (i & 1),                 // core breathes across the stride
     });
     drawFrame(ctx, i, 1, p);
   }

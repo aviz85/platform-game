@@ -4,20 +4,24 @@
 // When the player gets close it does a telegraphed pounce (attack anim windup,
 // then a harder, flatter leap).
 //
-// Squash sync trick: the art's 'move' anim is a 6-frame hop cycle
-// (0 rest, 1 crouch, 2 launch, 3 apex, 4 fall, 5 land-splat) at 10fps.
-// The engine advances e.animT and only resets it when e.anim changes, so we
-// pin e.animT to the exact frame that matches the physics phase every tick:
-// grounded = rest, windup = crouch, rising = launch-stretch, hang = apex,
-// dropping = fall, touchdown = land-splat. The sprite can never drift out of
+// Squash sync trick: the art's 'move' anim is a 7-frame hop cycle at 11fps
+// (0 rest, 1 deep-crouch, 2 launch-stretch, 3 apex, 4 fall-stretch,
+//  5 mega-splat, 6 rebound). The engine advances e.animT and only resets it
+// when e.anim changes, so we pin e.animT to the exact frame that matches the
+// physics phase every tick: grounded = rest, windup = crouch, rising =
+// launch-stretch, hang = apex, dropping = fall, touchdown = mega-splat, then
+// a spring-back rebound before it settles. The sprite can never drift out of
 // sync with the hop.
 //
 // States (e.mem.state): sit -> crouch -> air -> land -> sit
 //                       sit -> windup (pounce telegraph) -> air -> land -> sit
+//                       (any) -> hurt (flinch on blade hit) -> sit / air
 
-// 'move' anim frame centers (10 fps -> 0.1s per frame)
-const F_REST = 0.05, F_CROUCH = 0.15, F_LAUNCH = 0.25;
-const F_APEX = 0.35, F_FALL = 0.45, F_SPLAT = 0.55;
+// 'move' anim frame centers for the real 7-frame @ 11fps sheet: (i+0.5)/11.
+// Computed at frame CENTERS so a little float jitter can't tip into the wrong
+// cell (idx = floor(animT * fps), so each pin has ~0.045s of slack each side).
+const F_REST = 0.045, F_CROUCH = 0.136, F_LAUNCH = 0.227;
+const F_APEX = 0.318, F_FALL = 0.409, F_SPLAT = 0.500, F_REBOUND = 0.591;
 
 const CROUCH_T = 0.16;        // s of grounded anticipation squat
 const LAND_T = 0.14;          // s of landing squash (regular hop)
@@ -33,6 +37,9 @@ const POUNCE_RANGE_Y = 36;
 const POUNCE_COOLDOWN = 2.6;
 const AGGRO_X = 190;          // beyond this the slime just patrols
 const WINDUP_T = 0.34;        // one loop of the 4-frame @12fps attack jiggle
+const HURT_T = 0.14;          // flinch: recoil squash while knockback carries
+const IDLE_MIN = 0.5;         // gel-simmer glow mote cadence while sitting
+const IDLE_MAX = 1.3;
 
 const GEL = '#7df1ff';        // slime gel cyan (particle tint)
 const GEL2 = '#8cf5c0';       // energy-band green
@@ -72,6 +79,8 @@ export const behavior = {
     e.mem.pounceCool = 1.2;                             // grace before first pounce
     e.mem.pounce = false;
     e.mem.airT = 0;
+    e.mem.hitPrev = 0;                                  // last-frame e.hitT (fresh-hit edge detect)
+    e.mem.idleT = IDLE_MIN + world.rng() * (IDLE_MAX - IDLE_MIN);
     e.anim = 'move';
     e.animT = F_REST;
   },
@@ -84,12 +93,40 @@ export const behavior = {
     const dx = p.x - e.x;
     const dy = p.y - e.y;
 
+    // --- hit reaction: the engine sets e.hitT=0.25 on a blade hit and adds
+    // knockback to e.vx *after* update() runs. A rising e.hitT is the one-frame
+    // edge that a fresh hit just landed. Flinch: DON'T zero vx (so the knockback
+    // survives), squash the body, spit gel, and hold off pouncing for a beat.
+    const freshHit = e.hitT > m.hitPrev + 1e-4;
+    m.hitPrev = e.hitT > 0 ? e.hitT : 0;
+    if (freshHit && m.state !== 'hurt') {
+      m.state = 'hurt';
+      m.t = 0;
+      e.anim = 'move';
+      e.facing = Math.sign(dx) || m.dir;                // turn to face the blow
+      if (e.onGround) e.vy = -78;                        // little pop of juice
+      m.pounceCool = Math.max(m.pounceCool, 0.6);
+      world.spawnParticles('spark', e.x, e.y - e.h * 0.6, 5, {
+        speed: 64, life: 0.3, up: 22, spread: 1.7, color: GEL, gravity: 130,
+      });
+    }
+
     switch (m.state) {
       case 'sit': {
         e.vx = 0;
         e.anim = 'move';
         e.animT = F_REST;                               // hold the rest blob
         e.facing = m.dir;
+
+        // personality: the gel quietly simmers — a buoyant glow mote rises off
+        // the dome now and then so a resting slime never looks frozen.
+        m.idleT -= dt;
+        if (m.idleT <= 0) {
+          m.idleT = IDLE_MIN + world.rng() * (IDLE_MAX - IDLE_MIN);
+          world.spawnParticles('orb', e.x + (world.rng() * 2 - 1) * 4, e.y - e.h * 0.75, 1, {
+            speed: 5, life: 0.6, up: 14, color: world.rng() < 0.5 ? GEL : GEL2, gravity: -18,
+          });
+        }
 
         // knocked off a ledge / spawned in air — fall gracefully
         if (!e.onGround) { m.state = 'air'; m.t = 0; m.airT = 0; m.pounce = false; break; }
@@ -192,13 +229,38 @@ export const behavior = {
       case 'land': {
         e.vx = 0;
         e.anim = 'move';
-        e.animT = F_SPLAT;                              // hold the squash pancake
         e.facing = m.dir;
-        if (m.t >= (m.pounce ? LAND_POUNCE_T : LAND_T)) {
+        const landT = m.pounce ? LAND_POUNCE_T : LAND_T;
+        // first ~65% of the squash reads as the pancake, then springs back up
+        // through the rebound frame so the landing pops instead of snapping.
+        e.animT = m.t < landT * 0.65 ? F_SPLAT : F_REBOUND;
+        if (m.t >= landT) {
           m.state = 'sit';
           m.t = 0;
           m.pounce = false;
           m.sitT = SIT_MIN + world.rng() * (SIT_MAX - SIT_MIN);
+        }
+        break;
+      }
+
+      case 'hurt': {
+        e.anim = 'move';
+        e.animT = F_CROUCH;                             // compressed recoil blob
+        e.facing = m.dir;
+        // let the engine's knockback ride, bleeding it off with friction —
+        // never hard-zero, or the hit would feel weightless.
+        e.vx *= Math.max(0, 1 - dt * 8);
+        if (!Number.isFinite(e.vx)) e.vx = 0;
+        if (m.t >= HURT_T) {
+          m.t = 0;
+          if (e.onGround) {
+            m.state = 'sit';
+            m.sitT = SIT_MIN + world.rng() * (SIT_MAX - SIT_MIN);
+          } else {
+            m.state = 'air';
+            m.airT = 0.1;
+            m.pounce = false;
+          }
         }
         break;
       }

@@ -16,7 +16,9 @@ export function build() {
   const ctx = c.getContext('2d');
   const rnd = rng(553311);
 
-  // silhouette tones — near PAL.outline, never pure black
+  // silhouette tones — near PAL.outline, never pure black.
+  // Full 4-step ramp so cylinders read round: shadow>deepPurple>outline>void.
+  const SIL_H = PAL.shadow;           // #2e2149 brightest — top-left lit edge
   const SIL = PAL.outline;            // #1a1030 body
   const SIL_D = PAL.void;             // #0b0716 shaded (lower-right)
   const SIL_L = PAL.deepPurple;       // #241537 lit (upper-left)
@@ -44,6 +46,23 @@ export function build() {
     pxA(x, y + 1, RIM_HOT, 0.35); pxA(x, y - 1, RIM_HOT, 0.35);
     pxA(x + 1, y + 1, RIM, 0.18); pxA(x - 1, y - 1, RIM, 0.18);
     pxA(x + 1, y - 1, RIM, 0.18); pxA(x - 1, y + 1, RIM, 0.18);
+    // fuller outer bloom — sells the emissive halo without banding
+    pxA(x + 2, y, RIM, 0.1); pxA(x - 2, y, RIM, 0.1);
+    pxA(x, y + 2, RIM, 0.1); pxA(x, y - 2, RIM, 0.1);
+  };
+
+  // cylinder shade ramp across a pipe's diameter, with parity dither at each
+  // band boundary so the round gradient never bands. n: 0 (lit top/left edge)
+  // .. 1 (shadowed bottom/right). x,y feed the checker dither.
+  const cyl = (n, x, y) => {
+    const d = (x + y) & 1;
+    if (n < 0.14) return SIL_H;
+    if (n < 0.30) return d ? SIL_H : SIL_L;
+    if (n < 0.46) return SIL_L;
+    if (n < 0.60) return d ? SIL_L : SIL;
+    if (n < 0.80) return SIL;
+    if (n < 0.90) return d ? SIL : SIL_D;
+    return SIL_D;
   };
 
   // ============================================================
@@ -76,11 +95,11 @@ export function build() {
   function hpipe(xa, xb, cy, r) {
     for (let x = xa; x <= xb; x++) {
       for (let dy = -r; dy <= r; dy++) {
-        const col = dy === -r ? SIL_L : (dy >= r - 1 ? SIL_D : SIL);
-        px(x, cy + dy, col);
+        px(x, cy + dy, cyl((dy + r) / (2 * r), x, cy + dy));
       }
       if (rnd() < 0.5) pxA(x, cy - r, RIM, 0.5);          // top rim light
       if (rnd() < 0.12) pxA(x, cy - r, RIM_B, 0.45);      // brighter glints
+      if (rnd() < 0.06) px(x, cy - r, RIM_HOT);           // rare hot rim spark
       if (rnd() < 0.1) pxA(x, cy - r + 1, RIM_B, 0.3);    // spec line
     }
   }
@@ -102,8 +121,7 @@ export function build() {
     yTop = Math.max(yTop, TOPLIMIT + 2);
     for (let y = yTop; y < H; y++) {
       for (let dx = -r; dx <= r; dx++) {
-        const col = dx === -r ? SIL_L : (dx >= r - 1 ? SIL_D : SIL);
-        px(cx + dx, y, col);
+        px(cx + dx, y, cyl((dx + r) / (2 * r), cx + dx, y));
       }
       // left rim light, strongest near the (upper-left lit) top
       const nearTop = 1 - Math.min(1, (y - yTop) / 26);
@@ -114,7 +132,7 @@ export function build() {
     // top cap collar
     for (let dx = -r - 1; dx <= r + 1; dx++) {
       px(cx + dx, yTop - 1, SIL);
-      px(cx + dx, yTop - 2, dx <= 0 ? SIL_L : SIL);
+      px(cx + dx, yTop - 2, dx <= -r ? SIL_H : (dx <= 0 ? SIL_L : SIL));
     }
     pxA(cx - r - 1, yTop - 2, RIM_B, 0.5);
     pxA(cx - r, yTop - 3, RIM, 0.35);

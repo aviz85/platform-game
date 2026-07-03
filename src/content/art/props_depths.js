@@ -74,6 +74,26 @@ function statusLight(ctx, x, y, col) {
   P(ctx, x, y + 1, col);
 }
 
+// layered additive bloom — concentric halos, faint outer -> hot inner (anti-banding pulse read)
+function bloom(ctx, cx, cy, r, color, steps = 4) {
+  ctx.save();
+  for (let i = steps; i >= 1; i--) {
+    ctx.globalAlpha = 0.10 + 0.14 * ((steps - i) / (steps - 1 || 1));
+    circleFill(ctx, cx | 0, cy | 0, Math.round((r * i) / steps), color);
+  }
+  ctx.restore();
+}
+
+// stippled emissive spill along a ring band (softens the glow->metal seam, kills banding)
+function stippleRing(ctx, cx, cy, rIn, rOut, color, rand, density = 0.4) {
+  for (let y = -rOut; y <= rOut; y++) for (let x = -rOut; x <= rOut; x++) {
+    const dd = x * x + y * y;
+    if (dd >= rIn * rIn && dd <= rOut * rOut && rand() < density) {
+      P(ctx, (cx + x) | 0, (cy + y) | 0, color);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // reactor_core — pulsing cyan reactor in dark-metal containment ring (~56x62)
 // ---------------------------------------------------------------------------
@@ -123,26 +143,45 @@ function buildReactorCore() {
     }
   }
 
-  // glow bath inside the cavity
-  glow(ctx, cx, cy, 15, PAL.cyan2);
+  // glow bath inside the cavity — layered pulse bloom (faint wide -> hot core)
+  bloom(ctx, cx, cy, 16, PAL.cyan2, 4);
+  bloom(ctx, cx, cy, 9, PAL.cyan1, 3);
+  // stippled emissive spill onto the inner ring band (kills the glow->metal seam)
+  stippleRing(ctx, cx, cy, 14, 16, C[2], rand, 0.45);
 
-  // energy core — layered orb
+  // energy core — layered orb with a fuller ramp
   circleFill(ctx, cx, cy, 12, PAL.cyan3);
+  circleFill(ctx, cx, cy, 11, C[3]);
   circleFill(ctx, cx, cy, 10, C[2]);
   circleFill(ctx, cx - 1, cy - 1, 8, C[1]);
   circleFill(ctx, cx - 2, cy - 2, 5, C[0]);
   circleFill(ctx, cx - 3, cy - 3, 2, PAL.white);
-  // dither shimmer between core bands
-  dither(ctx, cx - 4, cy + 4, 9, 3, C[1], C[2]);
-  // orbiting energy motes around the core
-  for (let i = 0; i < 7; i++) {
-    const a = rand() * Math.PI * 2, rr = 13 + Math.floor(rand() * 2);
-    const mx = Math.round(cx + Math.cos(a) * rr), my = Math.round(cy + Math.sin(a) * rr);
-    P(ctx, mx, my, rand() < 0.5 ? C[0] : PAL.white);
+  // rim-light crescent on the upper-left of the orb (light from upper-left)
+  for (let a = 0; a < 24; a++) {
+    const t = Math.PI * (0.85 + (a / 24) * 0.75);
+    P(ctx, Math.round(cx + Math.cos(t) * 11), Math.round(cy + Math.sin(t) * 11), C[0]);
   }
-  // hot arc crackle on the core surface
+  // lower-right of the orb sinks to the darkest crystal step (form shading)
+  for (let a = 0; a < 20; a++) {
+    const t = Math.PI * (-0.15 + (a / 20) * 0.6);
+    P(ctx, Math.round(cx + Math.cos(t) * 11), Math.round(cy + Math.sin(t) * 11), C[3]);
+  }
+  // anti-banding dither shimmer between core bands (two seams)
+  dither(ctx, cx - 4, cy + 4, 9, 3, C[1], C[2]);
+  dither(ctx, cx - 6, cy - 6, 6, 2, C[0], C[1]);
+  // orbiting energy motes around the core, each with a faint halo
+  for (let i = 0; i < 9; i++) {
+    const a = rand() * Math.PI * 2, rr = 13 + Math.floor(rand() * 3);
+    const mx = Math.round(cx + Math.cos(a) * rr), my = Math.round(cy + Math.sin(a) * rr);
+    const hot = rand() < 0.5;
+    glow(ctx, mx, my, 1, hot ? PAL.cyan0 : PAL.cyan1);
+    P(ctx, mx, my, hot ? PAL.white : C[0]);
+  }
+  // hot arc crackle on the core surface (forked, brighter)
   line(ctx, cx - 6, cy + 3, cx - 2, cy + 6, C[0]);
+  line(ctx, cx - 4, cy + 5, cx - 3, cy + 8, PAL.white);
   line(ctx, cx + 3, cy - 6, cx + 6, cy - 2, C[0]);
+  P(ctx, cx + 5, cy - 4, PAL.white);
 
   // magenta conduit cables feeding the ring from below (endpoints touch the ring)
   line(ctx, 12, 52, 13, 42, PAL.magenta2);
@@ -219,19 +258,27 @@ function buildPipeCluster() {
   P(ctx, vx - 3, vy - 6, RU[0]);
   P(ctx, vx - 5, vy - 4, RU[0]);
 
-  // magenta neon conduit snaking across the wall plate
+  // magenta neon conduit snaking across the wall plate — faint bloom under the whole run
+  bloom(ctx, 8, 28, 8, PAL.magenta3, 3);
   line(ctx, 3, 14, 11, 22, PAL.magenta2);
   line(ctx, 11, 22, 11, 34, PAL.magenta2);
   line(ctx, 11, 34, 5, 42, PAL.magenta2);
-  P(ctx, 11, 22, PAL.magenta1); P(ctx, 11, 28, PAL.magenta1); P(ctx, 11, 34, PAL.magenta1);
+  // hot core running through the tube (lighter step) + node beads
+  line(ctx, 4, 15, 10, 21, PAL.magenta1);
+  line(ctx, 11, 24, 11, 32, PAL.magenta1);
+  P(ctx, 11, 22, PAL.magenta0); P(ctx, 11, 28, PAL.magenta0); P(ctx, 11, 34, PAL.magenta0);
+  glow(ctx, 11, 22, 2, PAL.magenta1);
   glow(ctx, 11, 28, 3, PAL.magenta1);
+  glow(ctx, 5, 42, 2, PAL.magenta1);
   P(ctx, 11, 28, PAL.white);
 
-  // pressure gauge on the main pipe
+  // pressure gauge on the main pipe — emissive dial with halo
   circleFill(ctx, 16, 30, 3, M[1]);
   circleFill(ctx, 16, 30, 2, PAL.void);
-  P(ctx, 16, 30, PAL.cyan1);
+  glow(ctx, 16, 30, 2, PAL.cyan1);
+  P(ctx, 16, 30, PAL.cyan0);
   line(ctx, 16, 30, 17, 28, PAL.cyan0);
+  P(ctx, 15, 29, PAL.cyan1);
   statusLight(ctx, 21, 44, PAL.cyan1);
 
   // drip stain under the elbow
@@ -289,12 +336,16 @@ function buildMechHusk() {
   P(ctx, bx - 6, by - 4, M[0]); P(ctx, bx - 4, by - 6, M[0]);
   P(ctx, bx - 2, by - 7, M[1]); P(ctx, bx + 2, by - 6, M[1]);
   P(ctx, bx - 7, by - 1, M[1]);
-  // sparking innards
+  // sparking innards — layered bloom + forked arc, hot white center
+  bloom(ctx, bx, by + 1, 6, PAL.magenta2, 3);
   glow(ctx, bx, by + 1, 4, PAL.magenta1);
+  circleFill(ctx, bx, by + 1, 2, PAL.magenta1);
   P(ctx, bx, by + 1, PAL.white);
-  P(ctx, bx - 2, by + 2, PAL.magenta1);
-  P(ctx, bx + 2, by, PAL.magenta2);
-  line(ctx, bx - 1, by - 2, bx + 1, by + 3, PAL.magenta1);
+  P(ctx, bx - 2, by + 2, PAL.magenta0);
+  P(ctx, bx + 2, by, PAL.magenta1);
+  line(ctx, bx - 1, by - 2, bx + 1, by + 3, PAL.magenta0);
+  line(ctx, bx + 1, by + 3, bx + 3, by + 4, PAL.magenta1);
+  P(ctx, bx - 3, by - 1, PAL.magenta2);
 
   // fallen head unit leaning against torso's left side
   R(ctx, 2, 26, 12, 12, M[2]);
@@ -304,9 +355,12 @@ function buildMechHusk() {
   // visor slit: one dead eye, one flickering cyan eye
   R(ctx, 4, 30, 8, 3, PAL.void);
   P(ctx, 6, 31, M[3]);                  // dead eye socket
-  glow(ctx, 10, 31, 3, PAL.cyan1);      // live eye
+  P(ctx, 5, 32, shade(PAL.metal3, -0.2));
+  bloom(ctx, 10, 31, 4, PAL.cyan2, 3);  // live eye — bloom halo
+  glow(ctx, 10, 31, 3, PAL.cyan1);
   P(ctx, 10, 31, PAL.white);
-  P(ctx, 11, 31, PAL.cyan1);
+  P(ctx, 11, 31, PAL.cyan0);
+  P(ctx, 10, 30, PAL.cyan1); P(ctx, 9, 31, PAL.cyan1);
   // head dents + rust
   P(ctx, 8, 27, M[3]); P(ctx, 5, 28, M[3]);
   rustPatch(ctx, 3, 34, 9, 3, rand, 0.4);
@@ -363,6 +417,10 @@ function buildNeonSign() {
   R(ctx, 34, 13, 1, 24, PAL.cyan2);
   P(ctx, 5, 12, PAL.cyan1); P(ctx, 20, 12, PAL.cyan1); P(ctx, 34, 37, PAL.cyan3); // tube hot/cold spots
   P(ctx, 12, 12, PAL.cyan0);
+  // cyan trim halos at the corners (tube glow bleeding onto the frame)
+  glow(ctx, 5, 12, 2, PAL.cyan1);
+  glow(ctx, 34, 12, 2, PAL.cyan1);
+  glow(ctx, 5, 37, 2, PAL.cyan2);
 
   // magenta glyph rows (alien lettering, uneven strokes)
   const glyphRow = (y, seed) => {
@@ -378,15 +436,21 @@ function buildNeonSign() {
       x += w + 1 + Math.floor(rr() * 2);
     }
   };
+  // deep interior bloom wash behind the glyphs (the sign's own light filling the box)
+  bloom(ctx, 19, 25, 13, PAL.magenta3, 4);
   glyphRow(18, 111);
   glyphRow(25, 222);
   glyphRow(32, 333);
   // one dying flicker glyph (dimmed segment)
   R(ctx, 26, 32, 3, 1, PAL.magenta3);
-  // glyph glow wash
+  // glyph glow wash — layered for a fuller emissive read
   glow(ctx, 19, 24, 9, PAL.magenta2);
+  glow(ctx, 14, 25, 6, PAL.magenta1);
+  glow(ctx, 24, 19, 5, PAL.magenta1);
   P(ctx, 10, 18, PAL.white);          // hottest glyph pixel
   glow(ctx, 10, 18, 2, PAL.magenta0);
+  P(ctx, 24, 25, PAL.magenta0);       // second hot node
+  glow(ctx, 24, 25, 1, PAL.magenta0);
 
   // hazard stripe strip under the panel
   hazardStripes(ctx, 6, 41, 28, 3);
@@ -452,9 +516,11 @@ function buildVentStack() {
   for (let j = 0; j < 3; j++) R(ctx, 9, 30 + j * 3, 10, 1, PAL.void);
   R(ctx, 8, 29, 12, 1, M[1]);
   R(ctx, 8, 38, 12, 1, M[3]);
-  // cyan heat glow leaking through the grille
+  // cyan heat glow leaking through the grille — layered bloom
+  bloom(ctx, 14, 33, 6, PAL.cyan3, 3);
   glow(ctx, 14, 33, 4, PAL.cyan2);
   P(ctx, 12, 33, PAL.cyan1); P(ctx, 16, 30, PAL.cyan1); P(ctx, 14, 36, PAL.cyan0);
+  P(ctx, 10, 33, PAL.cyan1); P(ctx, 18, 36, PAL.cyan2);
 
   // joint collar + rivets
   R(ctx, 7, 24, 13, 2, M[1]);

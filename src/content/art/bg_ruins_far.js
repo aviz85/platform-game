@@ -1,5 +1,6 @@
 // AETHERFALL — bg_ruins_far — SKY BASTION far layer.
-// Sunset sky: indigo→amber ordered-dither gradient, low sun disc with haze bands,
+// Sunset sky: indigo→amber ordered-dither gradient, low sun disc with graded corona
+// bloom, dithered crepuscular light rays, haze bands,
 // pale moon + stars, wind streaks, a rolling cloud sea in four lit bands, and tiny
 // broken tower silhouettes (amber-rimmed, lit windows, a shattered bridge) rising
 // from the clouds. 480x270 opaque, tiles horizontally seamlessly. factor 0.08.
@@ -88,6 +89,13 @@ function moon(ctx) {
 
 // ---- sun disc with hot core and atmosphere cut-bands ----
 function sun(ctx) {
+  // broad graded corona bloom — a soft outer halo the sunset light bleeds into
+  ctx.save();
+  ctx.globalAlpha = 0.09;
+  circleFill(ctx, SUNX, SUNY, 72, shade(PAL.amber1, -0.12));
+  ctx.globalAlpha = 0.14;
+  circleFill(ctx, SUNX, SUNY, 58, PAL.amber1);
+  ctx.restore();
   glow(ctx, SUNX, SUNY, 52, PAL.amber1);
   glow(ctx, SUNX, SUNY, 36, PAL.sun);
   circleFill(ctx, SUNX, SUNY, SUNR, PAL.sun);
@@ -100,6 +108,30 @@ function sun(ctx) {
     const hw = Math.floor(Math.sqrt(SUNR * SUNR - dy * dy));
     R(ctx, SUNX - hw - 3, SUNY + dy, hw * 2 + 7, th, haze);
   }
+}
+
+// ---- crepuscular rays: faint light shafts fanning up from the sinking sun ----
+function sunRays(ctx) {
+  // angles measured from straight-up (radians); a wide, uneven fan reads as god-rays
+  const angs = [-1.32, -0.98, -0.62, -0.28, 0.05, 0.34, 0.68, 1.02, 1.30];
+  const lens = [58, 74, 66, 88, 80, 84, 62, 76, 60];
+  ctx.save();
+  ctx.globalAlpha = 0.13;
+  for (let a = 0; a < angs.length; a++) {
+    const ang = -Math.PI / 2 + angs[a];
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const rlen = lens[a];
+    for (let t = SUNR + 3; t < rlen; t++) {
+      const frac = (t - SUNR) / (rlen - SUNR);          // 0 near sun -> 1 at tip
+      const keep = (t * 3 + a * 5) % 5;                 // irregular gaps => no banding
+      if (frac > 0.42 && keep < 2) continue;            // shafts thin out with distance
+      if (frac > 0.72 && keep < 3) continue;
+      const x = SUNX + dx * t, y = SUNY + dy * t;
+      if (y < 4) break;
+      wP(ctx, x, y, frac < 0.5 ? PAL.sun : shade(PAL.amber0, -0.12));
+    }
+  }
+  ctx.restore();
 }
 
 // ---- long wind-blown haze streaks across the amber band ----
@@ -254,6 +286,7 @@ export function build() {
   stars(ctx);
   moon(ctx);
   sun(ctx);
+  sunRays(ctx);
   hazeStreaks(ctx);
   birds(ctx);
 

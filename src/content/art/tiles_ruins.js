@@ -94,12 +94,20 @@ function stoneTop(ctx, x, y, seed) {
     P(ctx, cx + (rr() < 0.5 ? 1 : -1), y + 4, S2);
     if (rr() < 0.5) P(ctx, cx, y + 5, S3);
   }
-  // broken gold inlay channel — edge pixels always present so the ancient
-  // gold line runs continuously across neighbouring tiles
-  P(ctx, x, y + 4, PAL.gold1);
-  P(ctx, x + 15, y + 4, PAL.gold1);
-  for (let i = 1; i < 15; i++) if (rr() < 0.7) P(ctx, x + i, y + 4, PAL.gold1);
-  P(ctx, x + 3 + ((rr() * 9) | 0), y + 4, PAL.gold0);   // sun glint
+  // broken gold inlay channel — a full ramp gives the ancient gold depth:
+  // an amber shadow seated in the groove under a bright gold body, with a
+  // gold0 sun glint. Edge pixels always present so the line runs continuously
+  // across neighbouring tiles.
+  const goldCols = [0, 15];
+  for (let i = 1; i < 15; i++) if (rr() < 0.72) goldCols.push(i);
+  for (const gx of goldCols) {
+    P(ctx, x + gx, y + 4, PAL.gold1);
+    if (gx > 0 && gx < 15 && rr() < 0.4) P(ctx, x + gx, y + 5, PAL.amber2); // recessed groove shadow
+  }
+  const glint = 3 + ((rr() * 9) | 0);
+  P(ctx, x + glint, y + 4, PAL.gold0);                  // sun glint
+  P(ctx, x + glint, y + 3, shade(PAL.gold0, 0.25));     // specular kiss on the slab above
+  glow(ctx, x + glint, y + 4, 2, PAL.gold1);            // faint shimmer off the ancient gold
   // one crack biting down into the masonry below
   const dx = x + 2 + ((rr() * 11) | 0);
   P(ctx, dx, y + 6, S3); P(ctx, dx + 1, y + 7, S3); P(ctx, dx + 1, y + 8, S2);
@@ -198,7 +206,10 @@ function beam(ctx, x, y) {
     R(ctx, x + cx, y + 5, 2, 1, PAL.amber2);
     P(ctx, x + cx + (cx === 0 ? 1 : 0), y + 2, PAL.amber2);   // rivet
     P(ctx, x + cx + (cx === 0 ? 0 : 1), y + 4, VG_LO);        // corrosion fleck
+    P(ctx, x + cx + (cx === 0 ? 0 : 1), y + 5, VG_DK);        // verdigris weeping off the bronze trim
   }
+  P(ctx, x + 2, y + 5, VG_LO);   // trim stains bleeding inward along the beam underside
+  P(ctx, x + 13, y + 5, VG_DK);
 }
 
 // ---- '^' broken rebar spikes ---------------------------------------------------
@@ -228,6 +239,12 @@ function spikes(ctx, x, y, seed) {
   line(ctx, x + 4, y + 9, x + 8, y + 6, PAL.rust2);
   P(ctx, x + 8, y + 6, PAL.rust0);
   outline(ctx, x, y, T, T);
+  // molten-hot sheared tips make the hazard read at a glance. Glow radii stay
+  // within the tile so runs of spikes still tile seamlessly.
+  glow(ctx, x + 5, y + 3, 2, PAL.ember1);
+  glow(ctx, x + 11, y + 6, 2, PAL.ember1);
+  P(ctx, x + 5, y + 3, PAL.ember0);
+  P(ctx, x + 11, y + 6, PAL.ember0);
 }
 
 // ---- 'g' dry wind-blown grass ---------------------------------------------------

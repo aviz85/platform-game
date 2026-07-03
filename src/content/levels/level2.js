@@ -7,7 +7,8 @@
 //   C (35-63)   The Climb — one-way platforms zigzag up a cliff face (drone +
 //               floater guard the shaft), topping out on a plateau breather.
 //               SECRET: the platform "ladder" continues UP above the shaft
-//               (= at row 6) to a canopy path along rows 3-4: five one-way
+//               (= at row 6) — a lone shard at (51,4) baits the dash-leap into
+//               a canopy path along rows 3-4: five one-way
 //               platforms, 10 shards, a heart on a stone perch, then an exit
 //               platform that drops the player back onto island I5 (rejoin).
 //   D (64-112)  Canopy traverse — six floating islands over a long crystal
@@ -20,7 +21,7 @@
 //
 // Verticality: main path climbs from row 18 up to row 9, secret path to row 3.
 // All jumps ≤4 tiles up / ≤6 wide (max jump used once, signposted by shards).
-// Shards: 36 · Hearts: 2 · Enemies: 13 (5 drones, 5 floaters, 3 crawlers).
+// Shards: 37 · Hearts: 2 · Enemies: 13 (5 drones, 5 floaters, 3 crawlers).
 
 export const level = {
   name: 'CRYSTAL CANOPY',
@@ -34,7 +35,7 @@ export const level = {
     '....................................................................................................................................................',
     '....................................................................................................................................................',
     '.......................................................**......**......**......**......**...r.H.....................................................',
-    '......................................................====....====....====....====....====..####....................................................',
+    '...................................................*..====....====....====....====....====..####....................................................',
     '...............................................*.......v.......v.......v...............v....####...*................................................',
     '..............................................===............................................v....===...............................................',
     '....................................................................................................................................................',

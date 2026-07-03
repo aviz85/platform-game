@@ -378,24 +378,38 @@ export function build() {
   ctx.globalAlpha = 0.34;
   const ghost = (cx, topY, hw) => {
     for (let i = -hw; i <= hw; i++) {
-      for (let y = topY; y < H; y++) px(cx + i, y, y < topY + 2 ? PAL.metal2 : PAL.metal3);
+      for (let y = topY; y < H; y++) {
+        const vy = y - topY;
+        let col;
+        if (i === -hw) col = PAL.metal2;              // rim-lit left silhouette edge
+        else if (i === -hw + 1) col = PAL.metal3;
+        else if (i === hw) col = metalDeep;           // shaded right edge
+        else if (vy < 2) col = PAL.metal2;            // lit roofline
+        else col = PAL.metal3;
+        // atmospheric depth-fade dither toward the base (kills the flat slab)
+        if (vy > 40 && col === PAL.metal3 && ((i + y) & 1)) col = metalDeep;
+        px(cx + i, y, col);
+      }
     }
-    for (let y = topY - 9; y < topY; y++) { px(cx - hw + 3, y, PAL.metal3); px(cx - hw + 4, y, PAL.metal3); } // stack
+    for (let y = topY - 9; y < topY; y++) { px(cx - hw + 3, y, PAL.metal3); px(cx - hw + 4, y, PAL.metal2); } // stack (lit spine)
   };
   ghost(162, 118, 21);
   ghost(318, 96, 27);
   ghost(497, 128, 18);
   ghost(30, 104, 23);
   ghost(604, 140, 14);
-  // distant pipe gallery
-  for (let x = 0; x < W; x++) { px(x, 158, PAL.metal3); px(x, 159, PAL.metal3); px(x, 160, metalDeep); }
+  // distant pipe gallery (dithered rim highlight on top → shaded underside)
+  for (let x = 0; x < W; x++) {
+    px(x, 157, (x & 3) === 0 ? PAL.metal2 : PAL.metal3); // sparse lit rivet-line rim
+    px(x, 158, PAL.metal3); px(x, 159, PAL.metal3); px(x, 160, metalDeep);
+  }
   ctx.restore();
   // faint lit dots on the ghosts
   ctx.save();
   ctx.globalAlpha = 0.3;
   const gdots = [[154, 132, PAL.magenta1], [170, 148, PAL.cyan1], [312, 110, PAL.cyan1],
     [328, 128, PAL.magenta1], [492, 142, PAL.amber0], [24, 122, PAL.cyan1], [606, 152, PAL.magenta1]];
-  for (const [gx, gy, gc] of gdots) { px(gx, gy, gc); px(gx + 1, gy, gc); }
+  for (const [gx, gy, gc] of gdots) { softGlow(gx, gy, 3, gc); px(gx, gy, gc); px(gx + 1, gy, gc); }
   ctx.restore();
 
   // ---- elevated back pipe with cyan conduit (passes behind the towers) ----
@@ -456,6 +470,7 @@ export function build() {
   for (let i = 0; i < 14; i++) {
     const fx = rnd() * W, fy = 70 + rnd() * 180;
     const col = rnd() < 0.45 ? PAL.cyan0 : rnd() < 0.55 ? PAL.magenta0 : PAL.ember0;
+    softGlow(fx, fy, 2, col);              // faint emissive bloom
     ctx.save();
     ctx.globalAlpha = 0.2;
     px(fx - 1, fy, col); px(fx + 1, fy, col); px(fx, fy - 1, col); px(fx, fy + 1, col);

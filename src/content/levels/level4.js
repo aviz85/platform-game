@@ -66,7 +66,7 @@ export const level = {
     { type: 'crawler', x: 43, y: 14 },
     { type: 'crawler', x: 49, y: 13 },
     { type: 'drone', x: 60, y: 11 },
-    { type: 'crawler', x: 72, y: 15 },
+    { type: 'crawler', x: 68, y: 15 },
     { type: 'sentinel', x: 75, y: 10 },
     { type: 'crawler', x: 80, y: 15 },
     { type: 'sentinel', x: 82, y: 13 },

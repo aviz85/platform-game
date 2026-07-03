@@ -49,6 +49,8 @@ export const behavior = {
     e.mem.cool = 0.8;                              // grace before first charge
     e.mem.nextPause = PAUSE_MIN + world.rng() * (PAUSE_MAX - PAUSE_MIN);
     e.mem.sinceTurn = 0;                           // debounce so it can't spin
+    e.mem.prevHit = 0;                             // last frame's e.hitT — detect a fresh strike
+    e.mem.kbx = 0;                                 // decaying recoil velocity from being struck
     e.anim = 'move';
   },
 
@@ -58,6 +60,30 @@ export const behavior = {
     m.cool = Math.max(0, m.cool - dt);
     m.sinceTurn += dt;
     const p = world.player;
+
+    // ---------------- HIT REACTION (personality via e.hitT) ----------------
+    // The engine stamps e.hitT = 0.25 the instant the player's blade lands, then
+    // ticks it down each frame. A rising edge = a fresh strike: spit sparks, kick a
+    // decaying recoil away from the player, and — if caught mid-windup — stagger the
+    // charge into recovery so a well-timed blade is rewarded and the fight stays fair.
+    const hitNow = (e.hitT || 0) > (m.prevHit || 0) + 1e-4;
+    m.prevHit = e.hitT || 0;
+    if (hitNow) {
+      const away = -(world.dirToPlayer(e) || m.dir || 1);
+      m.kbx = away * 130;
+      world.spawnParticles('spark', e.x, e.y - e.h / 2, 5, {
+        speed: 46, life: 0.28, spread: 1.5,
+      });
+      if (m.state === 'telegraph') {                // knocked out of its wind-up
+        m.state = 'recover';
+        m.t = 0;
+        e.vx = 0;
+        dustPuff(e, world, 3, m.dir);
+      }
+    }
+    // Recoil bleeds off fast so it flinches, then recomposes.
+    m.kbx *= Math.max(0, 1 - dt * 9);
+    if (Math.abs(m.kbx) < 1) m.kbx = 0;
 
     // Airborne (knockback, spawned mid-air, walked off a crumbling edge):
     // hold course, let gravity do its thing, don't steer.
@@ -89,6 +115,10 @@ export const behavior = {
           m.state = 'pause';
           m.t = 0;
           e.vx = 0;
+          // Antenna-twitch: a lone spark flicks off the shell — reads as alive.
+          world.spawnParticles('spark', e.x + m.dir * 4, e.y - e.h + 2, 1, {
+            speed: 14, life: 0.3, up: true, spread: 0.6,
+          });
         }
 
         // Spot the player: near, on my level, not on cooldown, and the run-up
@@ -188,5 +218,14 @@ export const behavior = {
         m.t = 0;
       }
     }
+
+    // Layer the decaying strike-recoil on top of grounded, non-committed states —
+    // a visible flinch. The charge keeps its own lunge momentum (already sold by
+    // the hit sparks) so a struck crawler doesn't feel cheap to stop mid-attack.
+    if (m.kbx !== 0 && m.state !== 'charge') {
+      e.vx += m.kbx;
+    }
+    // NaN guard — never let a bad velocity poison collision.
+    if (!Number.isFinite(e.vx)) e.vx = 0;
   },
 };

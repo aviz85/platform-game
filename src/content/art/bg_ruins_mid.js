@@ -41,6 +41,16 @@ function wDither(ctx, x, y, w, h, c1, c2) {
 const BODY   = PAL.stone3;                 // main silhouette mass
 const BODY_L = shade(PAL.stone3, 0.16);    // sunlit top/left faces
 const BODY_D = PAL.shadow;                 // shaded right faces
+// full 5-step ramp across a tower's width (light upper-left -> dark right),
+// endpoints match BODY_L/BODY/BODY_D so the silhouette tone is unchanged —
+// the two in-between steps just give the mass a rounded, cylindrical read.
+const BODY_RAMP = [
+  shade(PAL.stone3, 0.30),                 // grazed sunlit edge
+  shade(PAL.stone3, 0.16),                 // == BODY_L
+  PAL.stone3,                              // == BODY
+  shade(PAL.stone3, -0.12),                // core shadow transition
+  PAL.shadow,                              // == BODY_D
+];
 const DARK   = PAL.deepPurple;             // recesses / dark windows / rubble
 const FAR    = shade(PAL.stone3, -0.18);   // one atmospheric step further back
 const FAR_L  = shade(PAL.stone3, -0.02);
@@ -155,13 +165,26 @@ function tower(ctx, g, { x, w, top, seed, banner, dome, glyphs, noGlow }) {
     if (gt() < 0.45) off = Math.min(9, Math.max(0, off + (gt() < 0.5 ? -2 : 2)));
     colTop[i] = top + off;
   }
-  // body columns
+  // body columns — cylindrical 5-step ramp, ordered-dithered to kill banding,
+  // biased darker toward the base so the tower sinks into the cloud haze.
   for (let i = 0; i < w; i++) {
-    const c = i < 2 ? BODY_L : (i >= w - 2 ? BODY_D : BODY);
-    wR(ctx, x + i, colTop[i], 1, H - colTop[i], c);
-    wP(ctx, x + i, colTop[i], RIM);                       // sunset rim on the crown
-    if (gt() < 0.07) wP(ctx, x + i, colTop[i], RIM_HOT);
-    if (colTop[i] > top + 5) wR(ctx, x + i, colTop[i] + 1, 1, 3, DARK);  // exposed interior
+    const t = w > 1 ? i / (w - 1) : 0;
+    const baseCF = 0.35 + t * 3.3;                        // light left -> dark right
+    const yTop = colTop[i];
+    for (let y = yTop; y < H; y++) {
+      const hz = y > 176 ? Math.min(1, (y - 176) / 78) * 0.9 : 0;   // haze sink
+      const cf = Math.max(0, Math.min(BODY_RAMP.length - 1, baseCF + hz));
+      const lo = Math.floor(cf), hi = Math.min(BODY_RAMP.length - 1, lo + 1);
+      const th = (((x + i) * 3 + y * 5) & 7) / 8;          // ordered dither threshold
+      wP(ctx, x + i, y, (cf - lo) > th ? BODY_RAMP[hi] : BODY_RAMP[lo]);
+    }
+    wP(ctx, x + i, yTop, RIM);                            // sunset rim on the crown
+    if (gt() < 0.07) wP(ctx, x + i, yTop, RIM_HOT);
+    if (colTop[i] > top + 5) wR(ctx, x + i, yTop + 1, 1, 3, DARK);  // exposed interior
+  }
+  // warm sunset rim grazing straight down the sunlit left edge (secondary light)
+  for (let y = colTop[0] + 1; y < Math.min(H - 16, colTop[0] + 46); y++) {
+    if (((y * 13) & 3) === 0) wP(ctx, x, y, gt() < 0.12 ? RIM_HOT : RIM);
   }
   // dome remnant (verdigris quarter-shell perched on the crown)
   if (dome) {
@@ -176,6 +199,10 @@ function tower(ctx, g, { x, w, top, seed, banner, dome, glyphs, noGlow }) {
       wP(ctx, cx + keep - 1, baseY + dy - dr, VERD_D);
     }
     wP(ctx, cx, baseY - dr - 1, RIM_HOT);                 // finial glint
+    if (!noGlow) {                                        // last sun catching the dome peak
+      const dgx = wX(cx);
+      if (dgx > 12 && dgx < W - 12) glow(ctx, dgx, baseY - dr, 3, PAL.amber0);
+    }
   }
   // cornice bands + window grids between them
   let band = 0;
@@ -194,7 +221,7 @@ function tower(ctx, g, { x, w, top, seed, banner, dome, glyphs, noGlow }) {
       for (let wx = x + 4; wx + 3 <= x + w - 4; wx += 7) {
         const lit = windowAt(ctx, gt, wx, rowY, litChance);
         // a rare big glowing window gets a halo (kept away from the seam)
-        if (!noGlow && lit === 2 && gt() < 0.14) {
+        if (!noGlow && lit === 2 && gt() < 0.2) {
           const gxp = wX(wx + 1);
           if (gxp > 12 && gxp < W - 12) glow(ctx, gxp, rowY + 2, 4, PAL.amber1);
         }
@@ -219,6 +246,10 @@ function tower(ctx, g, { x, w, top, seed, banner, dome, glyphs, noGlow }) {
       }
     }
     wR(ctx, bx - 1, by - 1, 7, 1, PAL.stone2);            // banner rod
+    if (!noGlow) {                                        // warm halo lifting the gold cloth
+      const gbx = wX(bx + 2);
+      if (gbx > 14 && gbx < W - 14) glow(ctx, gbx, by + 7, 4, GOLD);
+    }
   }
   // faint holographic glyphs drifting beside the tower
   if (glyphs) {

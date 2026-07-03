@@ -7,7 +7,7 @@
 // cyan/violet glow accents + star sparkles, and a tiny 3x5-px subtitle
 // "A CRYSTAL-PUNK ODYSSEY" flanked by gem-tipped rule lines.
 import { PAL } from './palette.js';
-import { makeCanvas, P, R, outline, glow } from './util.js';
+import { makeCanvas, P, R, outline, glow, shade } from './util.js';
 
 // ---- big letterforms: 10x14 grids, 3px-thick strokes, chamfered corners ----
 const GLYPHS = {
@@ -205,8 +205,16 @@ export function build() {
   const at = (x, y) => x >= 0 && y >= 0 && x < W && y < H && mask[y * W + x] === 1;
 
   // --- color pass: vertical cyan→violet gradient + crystal facets + rim light ---
-  const stops = [PAL.cyan0, PAL.cyan1, PAL.cyan2, PAL.violet1, PAL.violet2, PAL.violet3];
+  // 8-step ramp: extended past cyan0/violet3 at both ends for deeper crystal
+  // contrast and finer facet stepping (less banding on the tall letter columns).
+  const stops = [
+    shade(PAL.cyan0, 0.45),   // near-white cyan crown
+    PAL.cyan0, PAL.cyan1, PAL.cyan2,
+    PAL.violet1, PAL.violet2, PAL.violet3,
+    shade(PAL.violet3, -0.35), // deep violet root
+  ];
   const TOP = stops.length - 1;
+  const botEdge = shade(PAL.violet3, -0.4);
   for (let y = y0; y < y0 + letterH; y++) {
     for (let x = 0; x < W; x++) {
       if (!at(x, y)) continue;
@@ -223,8 +231,10 @@ export function build() {
       if (!at(x + 1, y)) i++;                          // right edge in shadow
       i = Math.max(0, Math.min(TOP, i));
       let col = stops[i];
+      // upper-left lit edge — the silhouette catches the key light on its left rim
+      if (!at(x - 1, y) && r < letterH * 0.5) col = shade(PAL.cyan0, 0.2);
       if (!at(x, y - 1)) col = ((x * 3 + k) % 11 === 0) ? PAL.white : PAL.cyan0; // top rim
-      if (!at(x, y + 1)) col = PAL.violet3;                                       // bottom edge
+      if (!at(x, y + 1)) col = botEdge;                                          // grounded bottom edge
       P(ctx, x, y, col);
     }
   }
@@ -237,6 +247,8 @@ export function build() {
   glow(ctx, pens[2] + 10, y0 + 3, 3, PAL.cyan1);       // T bar
   glow(ctx, pens[5] + 19, y0 + 26, 3, PAL.violet1);    // R leg tip
   glow(ctx, pens[9] + 18, y0 + 26, 4, PAL.cyan1);      // last L corner
+  glow(ctx, pens[3] + 10, y0 + 13, 3, PAL.cyan2);      // H crossbar (mid-word warmth)
+  glow(ctx, pens[7] + 10, y0 + 5, 3, PAL.violet1);     // 2nd A apex (violet half)
   // sparkles
   star(ctx, pens[0] + 15, y0 + 1, true);               // A apex
   star(ctx, pens[4] + 24, y0 + 1, false);              // 2nd E top-right

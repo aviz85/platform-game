@@ -1,16 +1,16 @@
 // AETHERFALL — level-exit PORTAL sprite (kind: sprite)
 // Frame 30x38, anchor bottom-center. Two anims:
-//   idle: 8 frames — slow swirling violet ring gate, 3 cyan motes orbiting
+//   idle: 10 frames — slow swirling violet ring gate, 3 cyan motes orbiting
 //         THROUGH the gate (depth-sorted behind/in-front), pulsing runes on
 //         a carved stone base, rotating rim glint.
-//   open: 6 frames — bright white-cyan rapid swirl, spinning energy rays,
+//   open: 8 frames — bright white-cyan rapid swirl, spinning energy rays,
 //         hot white core, sparks flung off the rim, runes blazing white.
 // Light from upper-left, PAL colors only, outline() per frame, deterministic.
 import { PAL } from './palette.js';
 import { makeCanvas, P, R, outline, glow, shade, rng, frameGrid } from './util.js';
 
 const FW = 30, FH = 38;
-const NIDLE = 8, NOPEN = 6;
+const NIDLE = 10, NOPEN = 8;
 const CX = 15, CY = 17;      // ring center inside a frame
 const ORX = 11, ORY = 15;    // ring outer radii
 const IRX = 8,  IRY = 12;    // inner rim (swirl surface inside)
@@ -23,6 +23,22 @@ function en(dx, dy, rx, ry) {
 }
 
 // ---------------------------------------------------------------- swirl fill
+// pick a swirl-arm color for phase-value v. Checker-dithers across every band
+// edge (par = (x+y)&1) so the spiral reads as a smooth gradient with no banding,
+// and crests the leading tip of each arm with the hot tone for an emissive edge.
+function swirlBand(v, cols, hot, par) {
+  const dw = 0.055;                                    // dither half-window
+  if (v > 0.95) return par ? hot : cols[0];            // blazing arm tip
+  const edges = [[0.14, 3, 2], [0.30, 2, 1], [0.46, 1, 0]];
+  for (const [b, lo, hi] of edges) {
+    if (Math.abs(v - b) < dw) return par ? cols[lo] : cols[hi];
+  }
+  if      (v < 0.14) return cols[3];
+  else if (v < 0.30) return cols[2];
+  else if (v < 0.46) return cols[1];
+  return cols[0];
+}
+
 // two-armed spiral rotating with phase t (0..1). cols = [bg, dim, mid, bright]
 function drawSwirl(ctx, ox, oy, t, cols, hot, arms, twist) {
   for (let y = -IRY; y <= IRY; y++) {
@@ -32,11 +48,7 @@ function drawSwirl(ctx, ox, oy, t, cols, hot, arms, twist) {
       const ang = Math.atan2(y / IRY, x / IRX);
       let v = (ang / TAU) * arms + rr * twist - t;
       v = ((v % 1) + 1) % 1;
-      let c;
-      if      (v < 0.14) c = cols[3];
-      else if (v < 0.30) c = cols[2];
-      else if (v < 0.46) c = cols[1];
-      else               c = cols[0];
+      let c = swirlBand(v, cols, hot, (x + y) & 1);
       // event-horizon: darken the very edge so the rim pops
       if (rr > 0.86) c = shade(c, -0.35);
       // gravity well: brighten toward the core
@@ -66,6 +78,11 @@ function drawRing(ctx, ox, oy, t, base, lite, dark, glint) {
       const ang = Math.atan2(y / ORY, x / ORX);
       const seg = Math.floor(((ang / TAU) + 1) * 10) % 2;
       if (seg === 0 && c === base) c = shade(base, -0.14);
+      // rim light: bright crest on the outer upper-left silhouette, dark lower-right
+      if (ro > 0.88) {
+        if (s < -3) c = shade(lite, 0.3);
+        else if (s > 6) c = shade(dark, -0.25);
+      }
       // orbiting glint
       let d = Math.abs(ang - (((ga % TAU) + TAU) % TAU) + (ang < 0 ? TAU : 0));
       d = Math.min(d, TAU - d);
@@ -162,6 +179,9 @@ function drawIdleFrame(ctx, ox, oy, f) {
   const pr = 3 + (f % 4 < 2 ? 0 : 1);
   glow(ctx, ox + CX, oy + CY, pr, PAL.violet1);
   glow(ctx, ox + CX, oy + CY, 1, PAL.cyan0);
+  // emissive halos on the base corner crystals
+  glow(ctx, ox + 4, oy + 32, 2, PAL.cyan1);
+  glow(ctx, ox + 25, oy + 32, 2, PAL.cyan1);
 }
 
 function drawOpenFrame(ctx, ox, oy, f) {
@@ -187,6 +207,9 @@ function drawOpenFrame(ctx, ox, oy, f) {
   // blazing core halo
   glow(ctx, ox + CX, oy + CY, 5, PAL.cyan1);
   glow(ctx, ox + CX, oy + CY, 2, PAL.white);
+  // base corner crystals flare during activation
+  glow(ctx, ox + 4, oy + 32, 3, PAL.cyan0);
+  glow(ctx, ox + 25, oy + 32, 3, PAL.cyan0);
 }
 
 // ---------------------------------------------------------------- build

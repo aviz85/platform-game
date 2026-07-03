@@ -71,13 +71,18 @@ export function build() {
   // vertical cylinder tank: dome, curved shading, rings, rust streaks, lit port
   function tank(cx, baseY, w, h, portCol) {
     const x0 = cx - (w >> 1), top = baseY - h;
+    // fuller 5-step curved ramp (light upper-left → shadow right) with ordered
+    // dither at the band transitions so the cylinder reads round, never banded
+    const ramp = [rimHi, rim, dk2, dk3, shade(dk3, -0.32)];
     for (let i = 0; i < w; i++) {
       const t = i / (w - 1);
-      let col = dk3;
-      if (t < 0.10) col = rim;
-      else if (t < 0.30) col = dk2;
-      else if (t > 0.86) col = shade(dk3, -0.32);
-      wR(x0 + i, top + 3, 1, h - 3, col);
+      const lvl = t * (ramp.length - 1);
+      const lo = Math.min(ramp.length - 2, Math.floor(lvl));
+      const frac = lvl - lo, cA = ramp[lo], cB = ramp[lo + 1];
+      for (let yy = top + 3; yy < baseY; yy++) {
+        const thr = ((i + yy) & 1) ? 0.34 : 0.66;   // 2x2 ordered dither
+        wP(x0 + i, yy, frac > thr ? cB : cA);
+      }
     }
     wEll(cx, top + 3, w >> 1, 3, dk2);                    // dome
     wR(x0 + 3, top + 1, Math.max(3, w >> 2), 1, rimHi);   // dome highlight
@@ -152,6 +157,7 @@ export function build() {
     ctx.globalAlpha = 0.55;
     wEll(cx, cy, r, r, shade(PAL.cyan3, -0.40));
     ctx.globalAlpha = 1;
+    wGlow(cx, cy, r - 1, shade(PAL.cyan2, -0.34));        // faint emissive halo through the blades
     wLine(cx - r + 1, cy, cx + r - 1, cy, dk2);
     wLine(cx, cy - r + 1, cx, cy + r - 1, dk2);
     wR(cx - 1, cy - 1, 3, 3, dk2);

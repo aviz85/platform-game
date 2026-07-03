@@ -275,6 +275,15 @@ export const behavior = {
         // don't hug the player point-blank forever — hold ~26px stand-off
         if (Math.abs(p.x - e.x) < 26) e.vx = 0;
 
+        // ambient core breathing — the golem is never truly inert; a slow
+        // ember drifts up from the cracked chest core (~2.5/s) so it reads as
+        // a living, humming machine even between attacks.
+        if (Math.floor(m.t * 2.5) !== Math.floor((m.t - dt) * 2.5)) {
+          world.spawnParticles('orb', e.x, e.y - CORE_DY, 1, {
+            speed: 12, life: 0.55, up: true, spread: 2.6,
+          });
+        }
+
         // ---- pick the next attack when the cooldown clears ----------------
         if (m.cool <= 0 && !p.dead) {
           const dist = world.distToPlayer(e);
@@ -404,14 +413,17 @@ export const behavior = {
           // aim at the player but keep the landing inside the arena
           const lo = m.homeX - ARENA_HALF + e.w / 2 + EDGE_PAD;
           const hi = m.homeX + ARENA_HALF - e.w / 2 - EDGE_PAD;
-          const tx = Math.max(lo, Math.min(hi, p.x));
+          // NaN-safe: fall back to our own x if the player pos is non-finite,
+          // so a bad read can never poison e.vx (which persists across frames).
+          const px = Number.isFinite(p.x) ? p.x : e.x;
+          const tx = Math.max(lo, Math.min(hi, px));
           const dx = tx - e.x;
           m.leapDir = Math.sign(dx) || e.facing;
           // ~1.0s expected hang time under engine gravity
           let vxl = dx / 1.0;
           if (vxl > LEAP_VX_MAX) vxl = LEAP_VX_MAX;
           else if (vxl < -LEAP_VX_MAX) vxl = -LEAP_VX_MAX;
-          e.vx = vxl;
+          e.vx = Number.isFinite(vxl) ? vxl : 0;
           e.vy = LEAP_VY;
           world.playSfx('jump');
           world.spawnParticles('dust', e.x, e.y - 1, 8, {

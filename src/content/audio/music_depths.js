@@ -31,7 +31,8 @@ const PROG = [
   'Cm','Cm','Ab','Ab','Bb','Bb','G','Gm',    // A'' (bar 30 = G major sting)
 ];
 
-const FILL_BARS = [7, 15, 23, 31];           // section turnarounds
+const FILL_BARS = [7, 15, 23, 31];           // big section turnarounds (every 8)
+const MID_FILL_BARS = [11, 19, 27];          // lighter mid-section fills (→ a fill every 4 bars once groove locks)
 
 // ---- channel note arrays ---------------------------------------------------
 const bass = [], stab = [], lead = [], kick = [], snare = [], hat = [];
@@ -43,6 +44,7 @@ for (let bar = 0; bar < 32; bar++) {
   const fill = FILL_BARS.includes(bar);
   for (let s = 0; s < 16; s++) {
     if (fill && s >= 12) continue;
+    if (bar === 16 && s < 8) continue;       // DROP: low end cuts out for the B-section lift, then slams back beat 3
     bass.push([bar, s, s % 2 === 0 ? r : r + 12, 1]);
   }
   if (fill) {
@@ -107,14 +109,22 @@ putPhrase(L_END, 31);
 // Drums: tight kick/snare noise groove.
 // Kick = low full-band thump on the floor; snare layers beats 2 & 4; hats escalate.
 for (let bar = 0; bar < 32; bar++) {
-  for (const s of [0, 4, 8, 12]) kick.push([bar, s, 22, 1]);
+  for (const s of [0, 4, 8, 12]) {
+    if (bar === 16 && s < 8) continue;                        // kick drops with the bass for the B-section lift
+    kick.push([bar, s, 22, 1]);
+  }
   if (FILL_BARS.includes(bar)) kick.push([bar, 14, 22, 1]);   // push into next section
+  else if (MID_FILL_BARS.includes(bar)) kick.push([bar, 15, 23, 1]); // subtle mid-bar pickup
 
   for (const s of [4, 12]) snare.push([bar, s, 56, 1]);
   if (bar === 15 || bar === 31) {                             // roll into B / loop
     snare.push([bar, 13, 56, 1], [bar, 14, 58, 1], [bar, 15, 60, 1]);
   } else if (bar === 7 || bar === 23) {
     snare.push([bar, 15, 58, 1]);                             // single ghost push
+  } else if (MID_FILL_BARS.includes(bar)) {
+    snare.push([bar, 14, 57, 1], [bar, 15, 59, 1]);           // light double-ghost fill every 4 bars
+  } else if (bar === 17) {
+    snare.push([bar, 0, 60, 1]);                              // accent the low-end slam back after the drop
   }
 
   if (bar < 8) {
@@ -134,7 +144,7 @@ export const track = {
   stepsPerBeat: 4,
   loop: true,
   channels: [
-    { wave: 'triangle', volume: 0.30, decay: 0.85, pan: 0,     notes: bass },  // pumping octave bass
+    { wave: 'sawtooth', volume: 0.24, decay: 0.85, pan: 0,     notes: bass },  // pumping octave bass (saw = synthwave drive)
     { wave: 'sawtooth', volume: 0.13, decay: 0.55, pan: -0.25, notes: stab },  // dark syncopated stabs
     { wave: 'square',   volume: 0.11, decay: 0.85, pan: 0.3,   notes: lead },  // eerie high motif
     { wave: 'noise',    volume: 0.26, decay: 0.90,             notes: kick },  // kick thump

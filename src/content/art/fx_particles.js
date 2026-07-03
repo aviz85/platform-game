@@ -27,6 +27,7 @@ export function build() {
   const M0 = PAL.magenta0, M1 = PAL.magenta1, M2 = PAL.magenta2, M3 = PAL.magenta3;
   const A0 = PAL.amber0, A1 = PAL.amber1;
   const W = PAL.white;
+  const GH = shade(PAL.stone0, 0.34);           // dust catch-light rim (brightest, upper-left)
   const G0 = shade(PAL.stone0, 0.10);           // dust highlight (soft pale grey-violet)
   const G1 = PAL.stone1, G2 = PAL.stone2, G3 = PAL.stone3;
 
@@ -60,19 +61,21 @@ export function build() {
         [3, 3, W],
       ]);
     });
-    // f2 — tiny plus
+    // f2 — tiny plus, still emitting
     fade(ctx, 0.7, () => {
       const ox = FW * 2;
+      glow(ctx, ox + 3, oy + 3, 1, C2);
       px(ctx, ox, oy, [
         [3, 2, C1], [3, 4, C1], [2, 3, C1], [4, 3, C1],
-        [3, 3, C0],
+        [3, 3, W],                                     // hot core holds to the end
       ]);
     });
-    // f3 — dying ember pixel + drifting specks
+    // f3 — dying ember pixel + drifting specks, faint last glow
     fade(ctx, 0.45, () => {
       const ox = FW * 3;
+      glow(ctx, ox + 3, oy + 3, 1, C2);
       px(ctx, ox, oy, [
-        [3, 3, C1],
+        [3, 3, C0],
         [1, 2, C3], [5, 5, C3],
       ]);
     });
@@ -82,24 +85,24 @@ export function build() {
   // soft grey-violet puff — billows outward, breaks apart, dissolves
   {
     const oy = FH;
-    // f0 — tight round puff, lit from upper-left
+    // f0 — tight round puff, lit from upper-left (catch-light on the near shoulder)
     fade(ctx, 0.85, () => {
       const ox = 0;
       px(ctx, ox, oy, [
-        [3, 2, G0], [4, 2, G1],
-        [2, 3, G0], [3, 3, G1], [4, 3, G1], [5, 3, G2],
-        [2, 4, G1], [3, 4, G1], [4, 4, G2], [5, 4, G2],
+        [3, 2, GH], [4, 2, G0],                         // rim highlight, upper-left
+        [2, 3, GH], [3, 3, G0], [4, 3, G1], [5, 3, G2],
+        [2, 4, G1], [3, 4, G1], [4, 4, G2], [5, 4, G3],
         [3, 5, G2], [4, 5, G3],
       ]);
     });
-    // f1 — expands, interior thins
+    // f1 — expands, interior thins, rim catches light on the leading edge
     fade(ctx, 0.65, () => {
       const ox = FW;
       px(ctx, ox, oy, [
-        [3, 1, G0], [4, 1, G1],
+        [3, 1, GH], [4, 1, G0],
         [2, 2, G0], [5, 2, G1],
-        [1, 3, G1], [3, 3, G1], [6, 3, G2],
-        [1, 4, G1], [4, 4, G2], [6, 4, G2],
+        [1, 3, G0], [3, 3, G1], [6, 3, G2],
+        [1, 4, G1], [4, 4, G2], [6, 4, G3],
         [2, 5, G2], [5, 5, G2],
         [3, 6, G3], [4, 6, G3],
       ]);
@@ -163,11 +166,12 @@ export function build() {
         [3, 4, V2], [4, 4, V3],
       ]);
     });
-    // f3 — 2x2 ember
+    // f3 — 2x2 ember, still haloed
     fade(ctx, 0.45, () => {
       const ox = FW * 3;
+      glow(ctx, ox + 3, oy + 3, 1, V2);
       px(ctx, ox, oy, [
-        [3, 3, V1], [4, 3, V2],
+        [3, 3, V0], [4, 3, V2],
         [3, 4, V2], [4, 4, V3],
       ]);
     });
@@ -210,9 +214,10 @@ export function build() {
         [1, 1, M0], [6, 1, M0], [1, 6, M1], [6, 6, M1], // diagonal sparks
       ]);
     });
-    // f2 — hollow ring at full radius, amber at cardinals
+    // f2 — hollow ring at full radius, amber at cardinals, ember still glowing
     fade(ctx, 0.8, () => {
       const ox = FW * 2;
+      glow(ctx, ox + 3, oy + 3, 2, PAL.ember1);
       px(ctx, ox, oy, [
         [3, 0, A1], [4, 0, M1],
         [1, 1, M0], [6, 1, M1],
@@ -220,24 +225,26 @@ export function build() {
         [0, 4, M1], [7, 4, M2],
         [1, 6, M1], [6, 6, M2],
         [3, 7, M2], [4, 7, A1],
-        [3, 3, PAL.ember1],                           // dying ember in the middle
+        [3, 3, PAL.ember0], [4, 3, PAL.ember1],       // dying ember, hot core in the middle
       ]);
     });
-    // f3 — ring breaks into dashes
+    // f3 — ring breaks into dashes, cinder still emits
     fade(ctx, 0.55, () => {
       const ox = FW * 3;
+      glow(ctx, ox + 4, oy + 3, 1, PAL.ember2);
       px(ctx, ox, oy, [
         [3, 0, M2], [6, 1, M2],
         [0, 2, M2], [7, 4, M2],
         [1, 6, M2], [5, 7, M2],
-        [4, 3, PAL.ember2],
+        [4, 3, PAL.ember1],
       ]);
     });
-    // f4 — last scattered cinders
+    // f4 — last scattered cinders, one final glowing mote
     fade(ctx, 0.3, () => {
       const ox = FW * 4;
+      glow(ctx, ox + 4, oy + 4, 1, PAL.ember2);
       px(ctx, ox, oy, [
-        [1, 0, M3], [7, 2, M3], [0, 5, M3], [6, 7, M3], [4, 4, PAL.ember2],
+        [1, 0, M3], [7, 2, M3], [0, 5, M3], [6, 7, M3], [4, 4, PAL.ember1],
       ]);
     });
   }
@@ -271,20 +278,22 @@ export function build() {
         [1, 1, C1], [5, 5, C1],                        // diagonal sparkle hints
       ]);
     });
-    // f2 — flash collapses back to a small dim diamond
+    // f2 — flash collapses back to a small dim diamond, still glowing
     fade(ctx, 0.7, () => {
       const ox = FW * 2;
+      glow(ctx, ox + 3, oy + 3, 1, C1);
       px(ctx, ox, oy, [
-        [3, 2, C1],
-        [2, 3, C1], [3, 3, C0], [4, 3, C2],
+        [3, 2, C0],
+        [2, 3, C1], [3, 3, W], [4, 3, C2],
         [3, 4, C2],
       ]);
     });
-    // f3 — afterglow specks
+    // f3 — afterglow specks, one last faint twinkle
     fade(ctx, 0.4, () => {
       const ox = FW * 3;
+      glow(ctx, ox + 3, oy + 3, 1, C2);
       px(ctx, ox, oy, [
-        [3, 3, C2], [5, 1, C3], [1, 5, C3],
+        [3, 3, C1], [5, 1, C3], [1, 5, C3],
       ]);
     });
   }

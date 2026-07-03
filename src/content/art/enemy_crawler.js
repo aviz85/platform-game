@@ -1,7 +1,7 @@
 // AETHERFALL — enemy_crawler: armored beetle-mech ground walker.
 // Ancient stone-metal plated carapace with moss growth, magenta reactor underglow.
-// Sheet layout: row 0 = 'move' (6 frames, tri-leg gait cycle, body bob, antenna wave)
-//               row 1 = 'attack' (4 frames, LOOPING charge cycle: plates flared open
+// Sheet layout: row 0 = 'move' (8 frames, tri-leg gait cycle, body bob, antenna wave)
+//               row 1 = 'attack' (6 frames, LOOPING charge cycle: plates flared open
 //                       exposing the magenta core, antennae pinned back, legs skittering
 //                       at double cadence, pulsing white-hot eye + streaming motion trail).
 //                       Loop-coherent on purpose — the crawler behavior holds anim='attack'
@@ -47,6 +47,19 @@ function legPose(p) {
   return { dx: Math.round(Math.cos(a) * 2), lift: Math.max(0, Math.round(Math.sin(a) * 1.7)) };
 }
 
+// two-segment insect leg: hip -> knee (bent up-and-out) -> clawed foot.
+// The knee rises mid-stride (when the foot lifts) so the cycle reads as real
+// articulation, not a stiff swinging stick. rim = lit joint pixel (near legs only).
+function drawLeg(ctx, hx, hy, fx, fy, lp, cUpper, cLower, rim) {
+  const kx = Math.round((hx + fx) / 2) + (lp.dx >= 0 ? 1 : -1);
+  const ky = hy + Math.round((fy - hy) * 0.45) - 1 - Math.round(lp.lift * 0.6);
+  line(ctx, hx, hy, kx, ky, cUpper);            // thigh (lit)
+  line(ctx, kx, ky, fx, fy, cLower);            // shin (shaded)
+  if (rim) P(ctx, kx, ky, rim);                 // specular knee joint
+  P(ctx, fx, fy, cLower);                        // foot
+  P(ctx, fx + (lp.dx >= 0 ? 1 : -1), fy, cLower); // claw
+}
+
 // o: { dy (body bob, +down), lift (plate flare, +up), core (0..1 reactor heat),
 //      lean (-1..1 body shift), near/far (leg poses), ant (-1|0|1 antenna sway),
 //      hot (eye white-hot), jaw (mandible open), trail (0|1|2 charge motion trail) }
@@ -56,13 +69,12 @@ function drawCrawler(ctx, ox, oy, o) {
   const by = oy + dy;        // chassis y origin
   const py = by - lift;      // plate y origin (flares upward)
 
-  // --- far legs (dark, behind chassis) ---
+  // --- far legs (dark, behind chassis; two-tone for recessed depth) ---
   for (let i = 0; i < 3; i++) {
     const lp = o.far[i];
     const hx = bx + FAR_HIPS[i], hy = by + 12;
     const fx = hx + lp.dx, fy = oy + G - lp.lift;
-    line(ctx, hx, hy, fx, fy, PAL.metal3);
-    P(ctx, fx + (lp.dx >= 0 ? 1 : -1), fy, PAL.metal3); // foot claw
+    drawLeg(ctx, hx, hy, fx, fy, lp, PAL.metal3, PAL.deepPurple, null);
   }
 
   // --- belly / chassis undercarriage ---
@@ -75,7 +87,10 @@ function drawCrawler(ctx, ox, oy, o) {
 
   // --- exposed reactor core when the plates flare open ---
   if (lift > 0) {
-    for (let yy = 12 - lift; yy <= 11; yy++) R(ctx, bx + 5, by + yy, 15, 1, PAL.magenta3);
+    // dithered plasma cavity: magenta3<->magenta2 checker reads as churning glow, not a flat slab
+    for (let yy = 12 - lift; yy <= 11; yy++) {
+      for (let x = 5; x <= 19; x++) P(ctx, bx + x, by + yy, ((x + yy) & 1) ? PAL.magenta3 : PAL.magenta2);
+    }
     const filC = core > 0.5 ? PAL.magenta1 : PAL.magenta2;
     R(ctx, bx + 6, by + 12 - lift, 13, 1, filC);
     if (core > 0.5) {
@@ -95,9 +110,14 @@ function drawCrawler(ctx, ox, oy, o) {
       P(ctx, bx + x, py + yy, c);
     }
   }
-  // ridge specular
+  // anti-banding: dither the stone1 -> stone2 transition across row 8 (avoids a hard band)
+  for (let x = 5; x <= 18; x++) if ((x + 8) & 1) P(ctx, bx + x, py + 8, PAL.stone2);
+  // ridge specular + rim light hugging the lit upper-left silhouette
   P(ctx, bx + 9, py + 4, shade(PAL.stone0, 0.25));
   P(ctx, bx + 10, py + 4, shade(PAL.stone0, 0.25));
+  P(ctx, bx + 8, py + 4, shade(PAL.stone0, 0.30));   // top rim
+  P(ctx, bx + 6, py + 5, shade(PAL.stone0, 0.22));   // left-edge rim
+  P(ctx, bx + 5, py + 6, shade(PAL.stone0, 0.16));
   // plate seams — subtle panel lines; glow magenta when the core is hot
   const seamC = core > 0.5 ? PAL.magenta1 : PAL.stone3;
   for (const sx of [9, 15]) {
@@ -138,15 +158,13 @@ function drawCrawler(ctx, ox, oy, o) {
   P(ctx, bx + 19, by + 5, PAL.metal2);
   P(ctx, bx + 19 + ant, by + 4, PAL.magenta1);
 
-  // --- near legs (lit, in front) ---
+  // --- near legs (lit, in front; jointed with specular knee) ---
   for (let i = 0; i < 3; i++) {
     const lp = o.near[i];
     const hx = bx + NEAR_HIPS[i], hy = by + 12;
     const fx = hx + lp.dx, fy = oy + G - lp.lift;
     P(ctx, hx, hy, PAL.metal0);                   // hip joint (lit)
-    line(ctx, hx, hy + 1, fx, fy, PAL.metal1);    // limb
-    P(ctx, fx, fy, PAL.metal2);                   // foot
-    P(ctx, fx + (lp.dx >= 0 ? 1 : -1), fy, PAL.metal2); // claw
+    drawLeg(ctx, hx, hy + 1, fx, fy, lp, PAL.metal1, PAL.metal2, PAL.metal0);
   }
 
   // --- outline, then soft emissive light (kept inside the frame) ---
@@ -162,7 +180,8 @@ function drawCrawler(ctx, ox, oy, o) {
     ctx.restore();
   }
 
-  // magenta underglow pooled beneath the body
+  // magenta underglow pooled beneath the body — wide faint base pool + brighter cores
+  glow(ctx, bx + 12, oy + 15, core > 0.6 ? 5 : 4, PAL.magenta3); // soft ambient wash
   glow(ctx, bx + 12, oy + 14, core > 0.6 ? 3 : 2, PAL.magenta2);
   glow(ctx, bx + 9, oy + 14, 1, PAL.magenta2);
   glow(ctx, bx + 15, oy + 14, 1, PAL.magenta2);
@@ -171,23 +190,27 @@ function drawCrawler(ctx, ox, oy, o) {
   glow(ctx, bx + 22, by + 8, 2, o.hot ? PAL.magenta0 : PAL.magenta2);
 }
 
+const MOVE_FRAMES = 8, ATK_FRAMES = 6;
+
 export function build() {
-  const c = makeCanvas(FW * 6, FH * 2);
+  const c = makeCanvas(FW * Math.max(MOVE_FRAMES, ATK_FRAMES), FH * 2);
   const ctx = c.getContext('2d');
 
-  // ---- row 0: move (6 frames) — tri-leg gait, subtle bob, antenna sway ----
-  const BOB = [0, 1, 1, 0, 1, 1];
-  for (let f = 0; f < 6; f++) {
+  // ---- row 0: move (8 frames) — tri-leg gait, subtle bob, smooth antenna sway ----
+  // 8 frames (up from 6) give a smoother stride: the tripod hand-off between frames
+  // is finer, so the walk no longer snaps between poses.
+  const BOB = [0, 1, 1, 0, 0, 1, 1, 0]; // body dips twice per full stride (each tripod plant)
+  for (let f = 0; f < MOVE_FRAMES; f++) {
     const near = [], far = [];
     for (let i = 0; i < 3; i++) {
-      near.push(legPose((f / 6 + i / 3) % 1));
-      far.push(legPose((f / 6 + i / 3 + 0.5) % 1));
+      near.push(legPose((f / MOVE_FRAMES + i / 3) % 1));
+      far.push(legPose((f / MOVE_FRAMES + i / 3 + 0.5) % 1));
     }
     drawCrawler(ctx, f * FW, 0, {
       dy: BOB[f], lift: 0, core: 0.25, lean: 0,
       near, far,
-      ant: (f === 2 || f === 3) ? 1 : 0,
-      jaw: f % 3 === 1,
+      ant: Math.round(Math.sin((f / MOVE_FRAMES) * Math.PI * 2)), // continuous -1..1 wave
+      jaw: f % 4 === 1,
       hot: false, trail: 0,
     });
   }
@@ -198,18 +221,22 @@ export function build() {
   // body bounces 0/1/0/1, eye + jaw + trail pulse on alternate frames. Every channel
   // returns to its frame-0 value after frame 3, so the 3 loops per charge read as
   // one continuous sprint — no snap-back.
-  const ATK_DY = [0, 1, 0, 1];
-  const ATK_CORE = [0.7, 1, 0.7, 1];
-  for (let f = 0; f < 4; f++) {
+  // 6 frames (up from 4): finer skitter cadence + an antenna shiver that reads as
+  // charge tension. Every channel is periodic so the loop still returns to its frame-0
+  // value — the ~2 loops per charge still read as one continuous, coherent sprint.
+  const ATK_DY = [0, 1, 0, 1, 0, 1];
+  const ATK_CORE = [0.7, 1, 0.7, 1, 0.7, 1];
+  const ATK_ANT = [-1, -1, 0, -1, -1, 0]; // antennae pinned back, quivering (loop-coherent)
+  for (let f = 0; f < ATK_FRAMES; f++) {
     const near = [], far = [];
     for (let i = 0; i < 3; i++) {
-      near.push(legPose((f / 4 + i / 3) % 1));
-      far.push(legPose((f / 4 + i / 3 + 0.5) % 1));
+      near.push(legPose((f / ATK_FRAMES + i / 3) % 1));
+      far.push(legPose((f / ATK_FRAMES + i / 3 + 0.5) % 1));
     }
     drawCrawler(ctx, f * FW, FH, {
       dy: ATK_DY[f], lift: 2, core: ATK_CORE[f], lean: 0,
       near, far,
-      ant: -1,
+      ant: ATK_ANT[f],
       hot: f % 2 === 1,
       jaw: f % 2 === 0,
       trail: 1 + (f % 2),
@@ -219,8 +246,8 @@ export function build() {
   return {
     image: c,
     anims: {
-      move: { frames: frameGrid(FW, FH, 6, 0), fps: 10, loop: true },
-      attack: { frames: frameGrid(FW, FH, 4, 1), fps: 12, loop: true },
+      move: { frames: frameGrid(FW, FH, MOVE_FRAMES, 0), fps: 12, loop: true },
+      attack: { frames: frameGrid(FW, FH, ATK_FRAMES, 1), fps: 14, loop: true },
     },
     anchor: { x: FW / 2, y: FH },
   };

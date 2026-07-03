@@ -23,6 +23,21 @@ export function build() {
     ctx.globalAlpha = 1;
   };
 
+  // wrapped emissive bloom — radial falloff, tiles seamlessly (glow() can't wrap)
+  const goldGlow = (cx, cy, r, col, a) => {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const d = Math.hypot(dx, dy);
+        if (d > r) continue;
+        const f = 1 - d / r;
+        px(cx + dx, cy + dy, col, a * f * f);
+      }
+    }
+  };
+  // 4x4 ordered-dither offset (−0.5..~0.44) to break gradient banding, deterministic
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const bayer = (x, y) => BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.47;
+
   // ---- soft fog wisp: flat lens shape, dithered edges, optional lit top ----
   function wisp(cx, cy, len, th, col, a, seed, topLight, lightA) {
     const r = rng(seed);
@@ -81,9 +96,13 @@ export function build() {
     const r = rng(303);
     for (let x = 0; x < W; x++) {
       const yT = Math.round(seaTop(x));
-      // sunset catching the crest
+      // sunset catching the crest — layered ramp, no hard band
       if (r() < 0.5) px(x, yT - 1, PAL.horizon, 0.22);
-      if (r() < 0.055) px(x, yT - 2, PAL.gold0, 0.4); // rare gold glint on a crest
+      if (r() < 0.28) px(x, yT - 1, PAL.skyGlow, 0.16);
+      if (r() < 0.055) { // rare gold glint on a crest — bloom + hot core
+        goldGlow(x, yT - 2, 2, PAL.gold1, 0.12);
+        px(x, yT - 2, PAL.gold0, 0.5);
+      }
       px(x, yT, PAL.skyGlow, 0.3);
       // upper body — checkered translucency (dither, no banding)
       for (let y = yT + 1; y < yT + 6; y++) {
@@ -95,10 +114,11 @@ export function build() {
         px(x, y, PAL.deepPurple, 0.66);
         if (((x * 3 + y) & 7) === 0) px(x, y, PAL.shadow, 0.4);
       }
-      // deep base fading to void at the screen edge
+      // deep base fading to void at the screen edge — bayer-dithered alpha, no banding
       for (let y = yT + 13; y < H; y++) {
         const t = (y - (yT + 13)) / Math.max(1, H - (yT + 13));
-        px(x, y, ((x + y) & 1) ? PAL.void : PAL.deepPurple, 0.72 + t * 0.16);
+        const a = 0.72 + t * 0.16 + bayer(x, y) * 0.07;
+        px(x, y, ((x + y) & 1) ? PAL.void : PAL.deepPurple, a);
       }
     }
   }
@@ -124,9 +144,12 @@ export function build() {
         px(x0 + i, topY - 1, PAL.void, 1);
         px(x0 + i, topY - 2, PAL.outline, 1);
       }
-      px(x0 - 1, topY - 3, PAL.gold1, 0.5);
+      // finial catching the sun: bloom → gold ramp → hot white core
+      goldGlow(x0 + 1, topY - 3, 3, PAL.gold1, 0.16);
+      px(x0 - 1, topY - 3, dkGold, 0.44);
       px(x0, topY - 3, PAL.gold1, 0.62);
-      px(x0 + 1, topY - 3, PAL.gold0, 0.8); // hot rim pixel
+      px(x0 + 1, topY - 3, PAL.gold0, 0.85);
+      px(x0 + 1, topY - 4, PAL.white, 0.7); // hot spark core
       px(x0 + 2, topY - 3, dkGold, 0.4);
     } else {
       px(x0, topY + Math.floor(r() * 3), PAL.gold1, 0.42); // faint light on the break
@@ -169,7 +192,7 @@ export function build() {
       px(x, y, PAL.outline, 1);
       px(x, y + 1, PAL.void, 1);
       if (r() < 0.5) px(x, y - 1, PAL.gold1, 0.34);        // sun skimming the rail
-      else if (r() < 0.14) px(x, y - 1, PAL.gold0, 0.5);   // sparkle
+      else if (r() < 0.14) { px(x, y - 1, PAL.gold0, 0.55); if (r() < 0.3) goldGlow(x, y - 1, 2, PAL.gold1, 0.1); } // sparkle w/ bloom
     }
     // balusters every 5px — some snapped, some hanging, some gone
     for (let dx = 4; dx < len - 4; dx += 5) {
@@ -187,8 +210,10 @@ export function build() {
         px(x, y, PAL.void, 1);
         px(x + 1, y, PAL.outline, 1);
       }
-      px(x, top, PAL.gold1, 0.4);                          // rim on the lit corner
-      if (r() < 0.5) px(x, top + 1, dkGold, 0.24);
+      px(x, top, PAL.gold1, 0.44);                         // rim on the lit corner
+      if (r() < 0.32) px(x, top, PAL.gold0, 0.5);          // occasional hot cap
+      if (r() < 0.5) px(x, top + 1, dkGold, 0.24);         // falloff down the shaft
+      if (r() < 0.22) px(x, top + 2, dkGold, 0.12);
     }
     // heavy end posts (left one whole more often — it faces the light)
     post(x0 - 3, baseY, 17 + Math.floor(r() * 3), r() < 0.35, seed * 7 + 1);
@@ -208,8 +233,10 @@ export function build() {
       if (y === h && r() < 0.8) px(x + 1, yy - 1, PAL.outline, 0.8); // splinter
     }
     const tipX = x0 + Math.round(lean);
+    goldGlow(tipX + 1, baseY - h - 1, 2, PAL.gold1, 0.14); // bloom on the fresh break
     px(tipX, baseY - h, PAL.gold1, 0.5);
-    px(tipX + 1, baseY - h - 1, PAL.gold0, 0.55); // sun on the break
+    px(tipX + 1, baseY - h - 1, PAL.gold0, 0.6); // sun on the break
+    px(tipX + 1, baseY - h - 2, PAL.white, 0.4); // hot splinter tip
     px(x0, baseY - 1, PAL.gold1, 0.2);
     for (let k = 0; k < 6; k++) { // rubble
       const rx = x0 - 3 + Math.floor(r() * 10), ry = baseY - Math.floor(r() * 2);

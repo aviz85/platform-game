@@ -98,7 +98,9 @@ function towerBroken() {
   R(ctx, wx, wy + 4, ww, wh - 4, PAL.deepPurple);
   ellipseFill(ctx, wx + ww / 2 - 0.5, wy + 4, 6, 5, PAL.deepPurple);
   R(ctx, wx + 1, wy + wh - 7, ww - 2, 6, PAL.amber2);
+  dither(ctx, wx + 1, wy + wh - 5, ww - 2, 1, PAL.amber1, PAL.amber2); // anti-band seam
   R(ctx, wx + 2, wy + wh - 4, ww - 4, 3, PAL.amber1);
+  dither(ctx, wx + 2, wy + wh - 3, ww - 4, 1, PAL.amber0, PAL.amber1); // anti-band seam
   R(ctx, wx + 4, wy + wh - 2, ww - 8, 1, PAL.amber0);
   P(ctx, wx + 5, wy + wh - 2, PAL.sun);
   // window sill + keystone
@@ -129,6 +131,9 @@ function towerBroken() {
     P(ctx, x + (w >> 1), y + h + 1, PAL.cyan0);
     glow(ctx, x + (w >> 1), y + h + 2, 3, PAL.cyan1);
   }
+  // warm sunset backlight — rim the shaded right silhouette (grandeur against indigo)
+  const rimC = shade(PAL.amber1, 0.12);
+  for (let y = 12; y < H; y += 2) { const rx = Rt - 1; if (y >= topAt(rx)) P(ctx, rx, y, rimC); }
   return { canvas: c };
 }
 
@@ -188,7 +193,9 @@ function bannerPole() {
   outline(ctx, 0, 0, W, H, PAL.outline);
   // emissive passes AFTER outline
   glow(ctx, 6, 5, 5, PAL.gold0);       // finial catching the sun
+  P(ctx, 5, 3, PAL.white);             // finial hot spark
   glow(ctx, ex, ey, 4, PAL.violet1);   // crystal emblem
+  glow(ctx, bx, 30, 3, PAL.gold0);     // sunlit banner edge shimmer
   return { canvas: c };
 }
 
@@ -256,7 +263,13 @@ function bridgeArch() {
   crack(ctx, 9, 20, 12, r); crack(ctx, 66, 24, 14, r);
   moss(ctx, 2, H - 6, 10, 6, r, 0.4); moss(ctx, 60, H - 5, 12, 5, r, 0.35);
   moss(ctx, 20, deckY, 8, 2, r, 0.25);
+  // warm sunset rim on the far pier's shaded outer edge
+  const rimC = shade(PAL.amber1, 0.15);
+  for (let y = deckY; y < H; y += 2) P(ctx, 73, y, rimC);
   outline(ctx, 0, 0, W, H, PAL.outline);
+  // emissive passes AFTER outline: gold rail finials + chain link catch the sunset
+  for (const rx of [4, 12, 20, 62, 70]) { P(ctx, rx, deckY - 6, PAL.gold0); glow(ctx, rx, deckY - 6, 2, PAL.gold1); }
+  glow(ctx, chx, chy + 14, 2, PAL.gold1);
   return { canvas: c };
 }
 
@@ -315,8 +328,15 @@ function guardianStatue() {
   P(ctx, 26, 28, PAL.outline);                                 // chipped shoulder notch
   moss(ctx, 5, 28, 4, 2, r, 0.5); moss(ctx, 3, 64, 8, 3, r, 0.5);
   moss(ctx, 22, 58, 5, 2, r, 0.4);
+  // warm sunset rim on the right pauldron silhouette
+  for (let y = 28; y <= 32; y++) P(ctx, 26, y, shade(PAL.amber1, 0.12));
   outline(ctx, 0, 0, W, H, PAL.outline);
-  glow(ctx, 16, 24, 4, PAL.cyan1);     // eye glow AFTER outline
+  // emissive passes AFTER outline: cyan eyes + gilded regalia catching the sun
+  glow(ctx, 16, 24, 4, PAL.cyan1);     // eyes
+  glow(ctx, 15, 13, 2, PAL.gold0);     // crest plume
+  P(ctx, 15, 12, PAL.white);           // crest hot tip
+  glow(ctx, 16, 35, 2, PAL.gold1);     // chest sigil
+  P(ctx, 15, 45, PAL.white);           // blade glint sparkle
   return { canvas: c };
 }
 

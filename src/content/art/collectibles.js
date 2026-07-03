@@ -2,7 +2,7 @@
 // 'heart' (pulsing pink energy heart, 4 frames). Frames are 10x12; anchor is
 // feet-center (bottom middle). Row 0 = shard, row 1 = heart.
 import { PAL } from './palette.js';
-import { makeCanvas, P, R, outline, glow, frameGrid } from './util.js';
+import { makeCanvas, P, R, outline, glow, shade, frameGrid } from './util.js';
 
 const FW = 10, FH = 12;
 
@@ -36,29 +36,41 @@ function drawShard(ctx, ox, oy, f) {
   for (let r = 0; r < SHARD_PROFILE.length; r++) {
     const rhw = Math.round(S.hw * SHARD_PROFILE[r]);
     const y = topY + r;
+    // upper-left light: top rows read slightly hotter, lower rows sink darker
+    const vf = 0.09 - r * 0.024;
     for (let dx = -rhw; dx <= rhw; dx++) {
+      const isEdge = dx === rhw && rhw > 0;
+      const isRim  = dx === -rhw && rhw > 0 && r <= 4;
       let c = dx < 0 ? S.left : dx > 0 ? S.right : S.mid;
       if (r <= 1) c = S.top;                                  // lit tip (upper-left light)
-      else if (dx === rhw && rhw > 0) c = S.edge;             // dark right edge
-      else if (dx === -rhw && rhw > 0 && r <= 4) c = PAL.cyan0; // rim light, upper-left
+      else if (isEdge) c = S.edge;                            // dark right edge
+      else if (isRim) c = PAL.cyan0;                          // rim light, upper-left
+      else {
+        // interior facet — vertical ramp + anti-band checker (two close shades)
+        c = ((dx + r) & 1) ? shade(c, vf) : shade(c, vf - 0.07);
+      }
       if (r >= 8) c = dx >= 0 ? PAL.cyan3 : PAL.cyan2;        // shaded lower point
       P(ctx, cx + dx, y, c);
     }
     // internal facet ridge (mid column stays bright on wide frames)
-    if (S.hw >= 2 && r >= 2 && r <= 5) P(ctx, cx, y, PAL.cyan1);
+    if (S.hw >= 2 && r >= 2 && r <= 5) P(ctx, cx, y, shade(PAL.cyan1, vf + 0.05));
   }
 
-  // sweeping specular glint column
+  // sweeping specular glint — a hot core with a soft trailing bloom above/below
   if (S.glint !== null) {
     const gx = cx + Math.max(-S.hw + 1, Math.min(S.hw - (S.hw > 1 ? 1 : 0), S.glint));
+    P(ctx, gx, topY + 1, PAL.cyan1);
     P(ctx, gx, topY + 2, PAL.cyan0);
     P(ctx, gx, topY + 3, PAL.white);
     P(ctx, gx, topY + 4, PAL.cyan0);
+    P(ctx, gx, topY + 5, PAL.cyan1);
+    if (S.hw >= 3) { P(ctx, gx - 1, topY + 3, PAL.cyan0); }   // widened glint on broad faces
   }
 
   outline(ctx, ox, oy, FW, FH);
 
   // emissive halo + hot pixels (after outline so bloom sits over everything)
+  glow(ctx, cx, oy + 5, S.flash ? 6 : 5, PAL.cyan2);              // wide faint aura
   glow(ctx, cx, oy + 5, S.flash ? 4 : 3, S.flash ? PAL.cyan0 : PAL.cyan1);
   P(ctx, cx, topY + 3, PAL.white);
 
@@ -101,16 +113,25 @@ const HEART_BIG = [ // 7 wide, 7 tall
   [[3, 3]],
 ];
 
-function drawHeartShape(ctx, ox, oy, spans, w) {
+function drawHeartShape(ctx, ox, oy, spans, w, bright = 0) {
   const h = spans.length;
   for (let r = 0; r < h; r++) {
+    const vt = h > 1 ? r / (h - 1) : 0;                         // 0 top .. 1 bottom tip
     for (const [a, b] of spans[r]) {
       for (let cIdx = a; cIdx <= b; cIdx++) {
-        let col = PAL.pink1;                                    // body
+        // vertical energy gradient: bright pink lobes fading into deep magenta core
+        let col = vt < 0.34 ? PAL.pink1
+                : vt < 0.68 ? shade(PAL.pink1, -0.14)          // mid transition tone
+                : PAL.magenta1;
         if (cIdx >= w - 2 && r >= 1) col = PAL.magenta1;        // right shade
         if (r >= h - 3 && cIdx >= (w >> 1)) col = PAL.magenta2; // lower-right deep shade
         if (cIdx === b && r >= h - 2) col = PAL.magenta2;       // bottom tip edge
+        // anti-band dither on the interior mid-body so the gradient never stripes
+        if (vt >= 0.3 && vt < 0.72 && cIdx > a && cIdx < b && cIdx < w - 2) {
+          col = ((cIdx + r) & 1) ? col : shade(col, 0.1);
+        }
         if (r <= 1 && cIdx <= 2 && cIdx >= a) col = PAL.pink0;  // left-lobe highlight
+        if (bright) col = shade(col, bright);                  // pulse bloom lift
         P(ctx, ox + cIdx, oy + r, col);
       }
     }
@@ -124,9 +145,10 @@ function drawHeart(ctx, ox, oy, f) {
     drawHeartShape(ctx, ox + 3, oy + 4, HEART_SMALL, 5);
     P(ctx, ox + 4, oy + 5, PAL.white);                 // hot core
     outline(ctx, ox, oy, FW, FH);
+    glow(ctx, cx, oy + 6, 4, PAL.magenta2);            // faint resting aura
     glow(ctx, cx, oy + 6, 2, PAL.pink1);
   } else {
-    drawHeartShape(ctx, ox + 2, oy + 3, HEART_BIG, 7);
+    drawHeartShape(ctx, ox + 2, oy + 3, HEART_BIG, 7, f === 2 ? 0.13 : 0);
     P(ctx, ox + 3, oy + 4, PAL.white);                 // hot core pixel
     P(ctx, ox + 4, oy + 5, PAL.pink0);
     if (f === 2) {
@@ -137,6 +159,7 @@ function drawHeart(ctx, ox, oy, f) {
       P(ctx, ox + 1, oy + 4, PAL.pink0);
     }
     outline(ctx, ox, oy, FW, FH);
+    glow(ctx, cx, oy + 6, f === 2 ? 6 : 5, PAL.magenta2);          // wide faint aura
     glow(ctx, cx, oy + 6, f === 2 ? 4 : 3, f === 2 ? PAL.pink0 : PAL.pink1);
     if (f === 2) {
       // sparkle motes flung off at peak of the pulse

@@ -48,6 +48,9 @@ export const behavior = {
     e.mem.scanDir = e.facing || 1;  // idle facing flip direction
     e.mem.scanT = 1.2 + world.rng() * 1.6; // desync scan flips between sentinels
     e.mem.humT = world.rng() * 0.8; // idle core-shimmer particle timer
+    e.mem.moteT = 0;                // telegraph charge-mote emit timer (accumulator)
+    e.mem.ventT = 0;                // cooldown vent-puff emit timer (accumulator)
+    e.mem.prevHit = 0;              // last frame's e.hitT — to detect a fresh strike
     e.anim = 'move';
   },
 
@@ -74,6 +77,25 @@ export const behavior = {
       }
       return true;
     };
+
+    // ---------------- HIT REACTION (personality via e.hitT) ----------------
+    // The engine stamps e.hitT = 0.25 the instant the player's blade lands, then
+    // ticks it down. A rising edge = a fresh strike this frame: the core spits
+    // sparks, and a blade landed mid-charge STAGGERS the wind-up (dumps it into a
+    // short cooldown) — rewarding a well-timed hit and keeping the turret fair to
+    // close on. Rooted, so no knockback — the recoil reads purely through FX.
+    const hitNow = (e.hitT || 0) > (m.prevHit || 0) + 1e-4;
+    m.prevHit = e.hitT || 0;
+    if (hitNow) {
+      world.spawnParticles('spark', muzzleX(), muzzleY(), 5, { speed: 40, life: 0.26 });
+      if (m.state === 'telegraph') {                 // interrupted its charge
+        world.spawnParticles('dust', e.x, muzzleY() + 2, 3, { speed: 20, life: 0.3, up: true });
+        m.state = 'cooldown';
+        m.stateT = 0;
+        m.ventT = 0;
+        m.cool = Math.max(m.cool, 0.6);              // brief vent, then resume scanning
+      }
+    }
 
     switch (m.state) {
 
@@ -109,6 +131,7 @@ export const behavior = {
         if (awake && m.cool <= 0 && d < AGGRO_DIST && hasLOS()) {
           m.state = 'telegraph';
           m.stateT = 0;
+          m.moteT = 0;              // first charge-mote leaves immediately
           e.anim = 'attack';        // charge-up anim (non-loop) from frame 0
           e.animT = 0;
           world.playSfx('telegraph');
@@ -124,9 +147,13 @@ export const behavior = {
         // keep tracking through the wind-up; the bearing locks only at release
         if (!p.dead) e.facing = world.dirToPlayer(e);
 
-        // converging charge motes pulled into the core, thickening as it peaks
-        const k = m.stateT / TELEGRAPH_TIME;               // 0..1 charge
-        if ((m.stateT * 60 | 0) % (k > 0.6 ? 4 : 7) === 0) {
+        // converging charge motes pulled into the core, thickening as it peaks.
+        // dt-accumulator (not a frame-count modulo) so the wind-up reads on EVERY
+        // attack — a dropped frame can't swallow the whole telegraph.
+        const k = Math.min(1, m.stateT / TELEGRAPH_TIME);  // 0..1 charge
+        m.moteT -= dt;
+        if (m.moteT <= 0) {
+          m.moteT = k > 0.6 ? 0.05 : 0.09;                 // denser as the core peaks
           world.spawnParticles('spark', muzzleX(), muzzleY(), 1,
             { speed: 18 + k * 26, life: 0.22 });
         }
@@ -182,6 +209,7 @@ export const behavior = {
         if (m.shots <= 0 && m.shotT <= -0.08) {
           m.state = 'cooldown';
           m.stateT = 0;
+          m.ventT = 0;             // first vent puff leaves immediately
           m.cool = COOLDOWN;
         }
         break;
@@ -193,8 +221,10 @@ export const behavior = {
         if (!p.dead && world.distToPlayer(e) < WAKE_DIST) {
           e.facing = world.dirToPlayer(e);   // stays trained on you while venting
         }
-        // one soft vent puff shortly after firing
-        if (m.stateT < 0.3 && (m.stateT * 60 | 0) % 9 === 0) {
+        // a few soft vent puffs shortly after firing (dt-accumulator, frame-safe)
+        m.ventT -= dt;
+        if (m.stateT < 0.35 && m.ventT <= 0) {
+          m.ventT = 0.12;
           world.spawnParticles('dust', e.x, muzzleY() + 2, 1,
             { speed: 10, life: 0.4, up: true });
         }

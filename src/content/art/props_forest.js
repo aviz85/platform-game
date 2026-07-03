@@ -37,11 +37,18 @@ function drawShard(ctx, bx, by, tx, ty, hw, ramp) {
     P(ctx, x1, y, ramp[3]);                              // dark right edge
     if (t > 0.1 && t < 0.85) P(ctx, x0, y, ramp[0]);     // rim highlight (upper-left light)
   }
-  // internal facet seam
-  line(ctx, tx, ty + 2, Math.round((tx + bx) / 2), by - 2, ramp[2]);
-  // hot emissive tip
+  // internal facet seam (dark) + a parallel caustic light core on wide shards
+  const mx = Math.round((tx + bx) / 2);
+  line(ctx, tx, ty + 2, mx, by - 2, ramp[2]);
+  if (hw >= 5) {
+    // bright inner glow line — light refracting down the crystal body
+    line(ctx, tx - 1, ty + 3, mx - 1, by - 8, ramp[0]);
+    P(ctx, tx - 1, ty + 4, PAL.cyan0 === ramp[0] ? PAL.white : ramp[0]);
+  }
+  // hot emissive tip + a soft second-brightest step below it (no hard banding)
   P(ctx, tx, ty, PAL.white);
   P(ctx, tx, ty + 1, ramp[0]);
+  P(ctx, tx, ty + 2, ramp[1]);
 }
 
 // tiny hovering firefly: hot core + soft halo
@@ -62,6 +69,23 @@ function mossRun(ctx, x, y, w, rand) {
   }
 }
 
+// rim light: brighten the top/left-facing edge of the whole silhouette (light
+// from upper-left). MUST run before outline() — it keys off transparent neighbors.
+// Blends softly so it reads as a glowing catch-light on the contour, not a paint edge.
+function rimLight(ctx, x, y, w, h, color, alpha = 0.5) {
+  const img = ctx.getImageData(x, y, w, h);
+  const d = img.data;
+  const al = (i, j) => (i < 0 || j < 0 || i >= w || j >= h) ? 0 : d[(j * w + i) * 4 + 3];
+  const marks = [];
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    if (al(i, j) > 20 && (al(i, j - 1) <= 20 || al(i - 1, j) <= 20)) marks.push([i, j]);
+  }
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  for (const [i, j] of marks) P(ctx, x + i, y + j, color);
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------------------
 // crystal_big — giant glowing crystal cluster (~54x64)
 // ---------------------------------------------------------------------------
@@ -77,12 +101,21 @@ function buildCrystalBig() {
   ellipseFill(ctx, 26, 56, 20, 5, PAL.stone3);
   ellipseFill(ctx, 22, 55, 12, 4, PAL.stone2);
   dither(ctx, 12, 55, 18, 3, PAL.stone2, PAL.stone3);
+  dither(ctx, 6, 58, 42, 2, PAL.stone3, PAL.violet3);   // blend rock→shadow (anti-band)
   R(ctx, 8, 60, 38, 3, PAL.deepPurple);           // base shadow band
+  dither(ctx, 8, 59, 38, 1, PAL.deepPurple, PAL.violet3); // soften shadow top edge
   // scattered rock chunks
   ellipseFill(ctx, 8, 58, 4, 3, PAL.stone3);
   P(ctx, 6, 56, PAL.stone1);
   ellipseFill(ctx, 47, 58, 4, 3, PAL.stone3);
   P(ctx, 45, 56, PAL.stone1);
+  // cyan light-pool: the crystals cast their glow down onto the rock beneath them
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ellipseFill(ctx, 27, 54, 17, 4, PAL.cyan2);
+  ctx.globalAlpha = 0.1;
+  ellipseFill(ctx, 27, 55, 21, 5, PAL.cyan1);
+  ctx.restore();
 
   // back accent shard (violet, reads as depth)
   drawShard(ctx, 18, 54, 8, 22, 4, V);
@@ -99,22 +132,34 @@ function buildCrystalBig() {
   mossRun(ctx, 31, 52, 12, rand);
   mossRun(ctx, 6, 56, 5, rand);
 
-  // sparkle glints on facets
-  P(ctx, 24, 14, PAL.white); P(ctx, 44, 26, PAL.cyan0);
-  P(ctx, 13, 38, PAL.white); P(ctx, 10, 28, PAL.cyan0);
+  // sparkle glints on facets (4-point twinkle: hot core + soft arms)
+  const twinkle = (gx, gy, col) => {
+    P(ctx, gx, gy, PAL.white);
+    P(ctx, gx - 1, gy, col); P(ctx, gx + 1, gy, col);
+    P(ctx, gx, gy - 1, col); P(ctx, gx, gy + 1, col);
+  };
+  twinkle(24, 14, PAL.cyan0); twinkle(44, 26, PAL.cyan0);
+  twinkle(13, 38, PAL.cyan0);
+  P(ctx, 10, 28, PAL.cyan0); P(ctx, 31, 20, PAL.white); P(ctx, 37, 47, PAL.cyan0);
+
+  // rim light along the top/left crystal contour — ambient glow catch on the silhouette
+  rimLight(ctx, 0, 0, W, H, PAL.cyan0, 0.42);
 
   outline(ctx, 0, 0, W, H);
 
-  // emissive halos after outline so the outline stays crisp
-  glow(ctx, 27, 6, 8, PAL.cyan1);
+  // emissive halos after outline so the outline stays crisp (layered for depth)
+  glow(ctx, 27, 6, 9, PAL.cyan1);
+  glow(ctx, 27, 6, 4, PAL.cyan0);
   glow(ctx, 45, 18, 6, PAL.cyan1);
   glow(ctx, 16, 32, 6, PAL.cyan1);
   glow(ctx, 8, 24, 4, PAL.violet1);
   glow(ctx, 20, 42, 3, PAL.cyan1);
   glow(ctx, 38, 44, 3, PAL.cyan1);
+  glow(ctx, 27, 52, 12, PAL.cyan1);            // broad under-glow lifting the whole base
   // ambient fireflies drawn to the crystal light
   firefly(ctx, 4, 16, PAL.cyan1);
   firefly(ctx, 50, 34, PAL.gold0);
+  firefly(ctx, 47, 12, PAL.cyan1);
   return c;
 }
 
@@ -188,13 +233,26 @@ function buildTreeGlow() {
     P(ctx, sx, sy + len + 2, shade(orbCols[i], -0.35));
   });
 
+  // rim light on the canopy's upper-left mass + lit trunk edge (moonlit contour)
+  rimLight(ctx, 0, 0, W, H, PAL.leaf0, 0.4);
+
   outline(ctx, 0, 0, W, H);
 
-  // glow pass (over outline, soft)
-  strands.forEach(([sx, sy, len], i) => glow(ctx, sx, sy + len + 1, 3, orbCols[i]));
+  // ambient canopy bloom — the whole crown breathes a soft bioluminescent haze
+  glow(ctx, 22, 18, 14, PAL.leaf2);
+  glow(ctx, 30, 20, 10, PAL.leaf1);
+  // glow pass (over outline, soft) — orbs layered hot + halo
+  strands.forEach(([sx, sy, len], i) => {
+    glow(ctx, sx, sy + len + 1, 4, orbCols[i]);
+    glow(ctx, sx, sy + len + 1, 2, shade(orbCols[i], 0.35));
+    // faint light-pool where each hanging orb spills onto the ground below
+    ctx.save(); ctx.globalAlpha = 0.12;
+    ellipseFill(ctx, sx, 74, 4, 2, orbCols[i]); ctx.restore();
+  });
   for (const [bx, by] of buds) glow(ctx, bx, by, 2, PAL.cyan1);
   firefly(ctx, 52, 44, PAL.gold0);
   firefly(ctx, 6, 38, PAL.cyan1);
+  firefly(ctx, 44, 40, PAL.cyan1);
   return c;
 }
 
@@ -218,17 +276,21 @@ function buildStatue() {
   R(ctx, 28, 45, 2, 3, S[3]);
 
   // robe: tapering silhouette from shoulders to plinth
+  const robeMid = shade(S[1], -0.12);                    // extra ramp step (anti-band)
   for (let y = 20; y < 44; y++) {
     const t = (y - 20) / 24;
     const hw = Math.round(6 + t * 4);                    // widens downward
     R(ctx, 18 - hw, y, hw * 2, 1, S[1]);
     R(ctx, 18 - hw, y, 2, 1, S[0]);                      // lit left
+    R(ctx, 18 + hw - 4, y, 1, 1, robeMid);               // soft mid step before shadow
     R(ctx, 18 + hw - 3, y, 3, 1, S[2]);                  // shaded right
     P(ctx, 18 + hw - 1, y, S[3]);
+    if ((y & 1) === 0) P(ctx, 18 - hw + 2, y, robeMid);  // faint dither off the lit edge
   }
   // robe folds
   line(ctx, 14, 26, 12, 43, S[2]);
   line(ctx, 22, 26, 25, 43, S[3]);
+  line(ctx, 18, 24, 18, 42, robeMid);                    // soft central fold highlight
 
   // shoulders + hood
   R(ctx, 10, 18, 16, 4, S[1]);
@@ -239,8 +301,12 @@ function buildStatue() {
   // hood cavity + glowing rune eyes
   R(ctx, 15, 12, 6, 6, PAL.deepPurple);
   R(ctx, 16, 13, 4, 4, PAL.void);
+  // rune-light pooling on the cavity walls (eyes bounce cyan into the void)
+  ctx.save(); ctx.globalAlpha = 0.35;
+  R(ctx, 16, 15, 4, 2, PAL.cyan3); ctx.restore();
   P(ctx, 16, 14, PAL.cyan1); P(ctx, 19, 14, PAL.cyan1);
   P(ctx, 16, 13, PAL.cyan0); P(ctx, 19, 13, PAL.cyan0);
+  P(ctx, 16, 15, PAL.cyan2); P(ctx, 19, 15, PAL.cyan2); // eye lower gleam
 
   // clasped hands + ancient sword held point-down
   R(ctx, 16, 28, 5, 3, S[0]);
@@ -265,10 +331,17 @@ function buildStatue() {
   mossRun(ctx, 3, 48, 13, rand);
   P(ctx, 27, 22, PAL.moss2); P(ctx, 26, 30, PAL.moss2);
 
+  // rim light: cool ambient catch along the hood/shoulder contour
+  rimLight(ctx, 0, 0, W, H, PAL.stone0, 0.45);
+
   outline(ctx, 0, 0, W, H);
-  glow(ctx, 16, 13, 2, PAL.cyan1);
-  glow(ctx, 19, 13, 2, PAL.cyan1);
+  // layered eye glow — hot core + wider bloom spilling from the hood
+  glow(ctx, 16, 14, 3, PAL.cyan1);
+  glow(ctx, 19, 14, 3, PAL.cyan1);
+  glow(ctx, 17, 14, 2, PAL.cyan0);
+  glow(ctx, 18, 15, 5, PAL.cyan2);              // soft downward face-wash
   firefly(ctx, 31, 26, PAL.gold0);
+  firefly(ctx, 5, 30, PAL.cyan1);
   return c;
 }
 
@@ -355,8 +428,13 @@ function buildArch() {
   mossRun(ctx, cx - RO - 2, cy + 21, 8, rand);
   mossRun(ctx, cx + RI, cy + 21, 8, rand);
 
+  // rim light along the arch's lit outer curve + pillar edges
+  rimLight(ctx, 0, 0, W, H, PAL.stone0, 0.4);
+
   outline(ctx, 0, 0, W, H);
-  glow(ctx, cx, cy - RO + 4, 4, PAL.cyan1);
+  // keystone rune: layered glow so the apex reads as the arch's power source
+  glow(ctx, cx, cy - RO + 4, 5, PAL.cyan1);
+  glow(ctx, cx, cy - RO + 4, 2, PAL.cyan0);
   firefly(ctx, cx - 6, cy + 6, PAL.gold0);
   firefly(ctx, cx + 9, cy - 2, PAL.cyan1);
   return c;
@@ -389,8 +467,14 @@ function buildFireflyBush() {
   // glowing berries nestled in the foliage
   P(ctx, 14, 16, PAL.cyan0); P(ctx, 22, 15, PAL.cyan1); P(ctx, 9, 16, PAL.cyan1);
 
+  // rim light on the leafy upper-left contour
+  rimLight(ctx, 0, 0, W, H, PAL.leaf0, 0.38);
+
   outline(ctx, 0, 0, W, H);
+  // every berry gets its own glow (emissive)
   glow(ctx, 14, 16, 2, PAL.cyan1);
+  glow(ctx, 22, 15, 2, PAL.cyan1);
+  glow(ctx, 9, 16, 2, PAL.cyan1);
   // fireflies rising off the bush
   firefly(ctx, 5, 6, PAL.gold0);
   firefly(ctx, 16, 3, PAL.amber0);
@@ -440,9 +524,17 @@ function buildLantern() {
   R(ctx, 10, 22, 7, 1, PAL.metal3);                      // base of cage
   P(ctx, 13, 23, PAL.metal2);                            // finial
 
+  // warm amber light-pool spilling onto the post + arm before outline
+  ctx.save(); ctx.globalAlpha = 0.14;
+  ellipseFill(ctx, 8, 20, 6, 8, PAL.amber1); ctx.restore();
+  // rim light — cool ambient on the stone edges (contrasts the warm flame)
+  rimLight(ctx, 0, 0, W, H, PAL.stone0, 0.4);
+
   outline(ctx, 0, 0, W, H);
-  glow(ctx, 13, 17, 6, PAL.amber0);
-  glow(ctx, 13, 17, 3, PAL.gold0);
+  // flame glow: warm layered bloom
+  glow(ctx, 13, 17, 7, PAL.amber1);
+  glow(ctx, 13, 17, 5, PAL.amber0);
+  glow(ctx, 13, 17, 2, PAL.gold0);
   firefly(ctx, 3, 26, PAL.gold0);
   return c;
 }

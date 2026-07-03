@@ -93,7 +93,8 @@ export function build() {
     const len = 4 + ((rnd() * 8) | 0);
     for (let i = 0; i < len; i++) px(vx + i, vy + (((i / 3) | 0) & 1), teal2);
     px(vx + ((len / 2) | 0), vy, teal3);
-    ambient(vx + ((len / 2) | 0), vy, 3, PAL.cyan2, 0.14);
+    ambient(vx + ((len / 2) | 0), vy, 4, PAL.cyan3, 0.10); // wide dim wash
+    wglow(vx + ((len / 2) | 0), vy, 2, PAL.cyan2);         // tight emissive halo
   }
 
   // dark vertical fissures wandering down the wall
@@ -121,13 +122,19 @@ export function build() {
     [18, 10, 26], [52, 16, 44], [95, 8, 20], [150, 22, 55], [210, 12, 30],
     [260, 18, 40], [318, 10, 24], [366, 24, 60], [430, 14, 34], [464, 8, 18],
   ];
+  const stalRim = shade(void0, 0.13); // faint upper-left edge separates rock from wall
   for (const [sx, sw, sl] of stal) {
     for (let i = -sw; i <= sw; i++) {
       const t = 1 - Math.abs(i) / sw;
       const hgt = Math.max(1, Math.round(sl * Math.pow(t, 1.4)));
       for (let j = 0; j < hgt; j++) px(sx + i, j, ink);
     }
-    if (sl >= 40) px(sx, sl - 1, teal1); // long tips catch faint reactor uplight
+    for (let i = -sw; i < 0; i++) { // rim the lower-left contour of the cone
+      const t = 1 - Math.abs(i) / sw;
+      const hgt = Math.max(1, Math.round(sl * Math.pow(t, 1.4)));
+      if ((i & 1) === 0) px(sx + i, hgt - 1, stalRim);
+    }
+    if (sl >= 40) { px(sx, sl - 1, teal1); wglow(sx, sl - 1, 2, PAL.cyan3); } // long tips catch faint reactor uplight
   }
 
   // floor mounds / distant rubble ridges
@@ -150,8 +157,11 @@ export function build() {
       if (y % 30 === 2) for (let i = 0; i < cw; i++) px(cx0 + i, y, shade(ink, 0.05));
     }
     for (let y = 10; y < H; y += 18) px(cx0 + cw - 3, y, teal1); // dim service lights
-    px(cx0 + cw - 3, 46, PAL.cyan2); // one live beacon
-    ambient(cx0 + cw - 3, 46, 3, PAL.cyan1, 0.25);
+    px(cx0 + cw - 3, 46, PAL.cyan1); // one live beacon
+    px(cx0 + cw - 3, 45, PAL.cyan0); // hot pixel
+    ambient(cx0 + cw - 3, 46, 4, PAL.cyan3, 0.12);
+    wglow(cx0 + cw - 3, 46, 3, PAL.cyan2);
+    px(cx0, 0, colEdge); // faint upper-left cap catch light
   }
 
   // ============ 4. large soft color washes (depth + atmosphere)
@@ -206,9 +216,13 @@ export function build() {
     for (let i = -8; i <= 8; i++) // housing silhouette
       for (let j = -2; j <= 12; j++) px(cx0 + i, cy0 + j, ink);
     for (let i = -6; i <= 6; i++) px(cx0 + i, cy0 - 3, ink); // roof
+    // upper-left rim light on the housing silhouette
+    for (let i = -6; i <= 6; i++) px(cx0 + i, cy0 - 3, i < 0 ? shade(ink, 0.11) : shade(ink, 0.05));
+    for (let j = -2; j <= 12; j++) if ((j & 1) === 0) px(cx0 - 8, cy0 + j, shade(ink, 0.08));
     for (let j = 0; j < 7; j++) px(cx0, cy0 - 4 - j, ink);   // mast
+    px(cx0 - 1, cy0 - 6, shade(ink, 0.09));                  // mast edge catch
     px(cx0, cy0 - 11, hot);                                   // mast beacon
-    ambient(cx0, cy0 - 11, 2, mid, 0.35);
+    wglow(cx0, cy0 - 11, 3, mid);
     for (let j = -3; j <= 3; j++)                             // circular core window
       for (let i = -3; i <= 3; i++) {
         const d2 = i * i + j * j;

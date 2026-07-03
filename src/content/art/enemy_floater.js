@@ -42,14 +42,23 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
   const bot = top + H - 1;
 
   // ---- translucent dome, row by row (widest at the bottom lip) ----
+  const vMid = lift(shade(PAL.violet2, -0.10), bB);        // extra in-between ramp step (anti-banding glass depth)
+  const vRim = lift(shade(PAL.violet0, 0.18), bB);         // bright upper-left rim highlight
   for (let y = top; y <= bot; y++) {
     const u = (bot - y) / (bot - top);                     // 0 lip .. 1 crown
     const w = Math.floor(rx * Math.sqrt(Math.max(0, 1 - (u * 0.94) ** 2)) + 0.35);
-    let col = v2;
+    // full vertical shade ramp: lit crown → glassy mid → deep mid → shaded lip
+    let col = u > 0.66 ? v1 : u > 0.40 ? v2 : vMid;
     if (y <= top + 1) col = v1;                            // lit crown
     if (y >= bot - 1) col = v3;                            // shaded lip
     R(ctx, cx - w, y, w * 2 + 1, 1, col);
+    // dither the deep-mid → lip transition so the translucent ramp never bands
+    if (u > 0.14 && u < 0.34 && w >= 2) {
+      P(ctx, cx - w + 1 + ((y & 1)), y, v3);
+      P(ctx, cx + w - 1 - ((y & 1)), y, v3);
+    }
     P(ctx, cx - w, y, y >= bot - 1 ? v3 : v1);             // left rim catches light
+    if (u > 0.5) P(ctx, cx - w + 1, y, vRim);              // rim light on the lit upper-left curve
     P(ctx, cx + w, y, v3);                                 // right edge in shade
   }
   // interior depth: dark under-bell cavity + soft mid gradient (reads as glass)
@@ -90,6 +99,7 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
   const baseX = [-4, -2, 0, 2, 4];
   const tipY = [oy + 16, oy + 18, oy + 19, oy + 18, oy + 16];
   const yStart = bot + 2;
+  const tips = [];
   for (let ti = 0; ti < 5; ti++) {
     const tx = cx + baseX[ti];
     const len = Math.max(1, tipY[ti] - yStart);
@@ -97,17 +107,20 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
     for (let y = yStart; y <= tipY[ti]; y++) {
       const k = y - yStart;
       const amp = Math.min(2, 0.5 + k * 0.25);             // amplitude grows to the tip
-      let xo = Math.round(Math.sin(wave * Math.PI * 2 - k * 0.8 + ti * 1.7) * amp);
-      if (flare > 0) xo += Math.sign(tx - cx) * Math.round(flare * k / 4); // outward splay
+      // two-harmonic sway: base swell + faster ripple → organic, non-uniform secondary motion
+      const swell = Math.sin(wave * Math.PI * 2 - k * 0.8 + ti * 1.7);
+      const ripple = 0.4 * Math.sin(wave * Math.PI * 4 - k * 0.55 + ti * 0.9);
+      let xo = Math.round((swell + ripple) * amp * 0.86);
+      if (flare > 0) xo += Math.sign(tx - cx || 1) * Math.round(flare * k / 4); // outward splay
       const f = k / len;
-      const col = f < 0.3 ? c3 : f < 0.65 ? c2 : c1;
+      const col = f < 0.3 ? c3 : f < 0.6 ? c2 : f < 0.85 ? c1 : c0; // 4-step ramp, brightening to the luminous tip
       const X = tx + xo;
       if (prevX !== null && Math.abs(X - prevX) > 1) {
         P(ctx, (X + prevX) >> 1, y, col);                  // bridge diagonal jumps — keep tendril connected
       }
       P(ctx, X, y, col);
       if (ti === 2 && k < 2) P(ctx, X + 1, y, c3);         // thicker center tendril root
-      if (y === tipY[ti]) P(ctx, X, y, bright > 0.6 ? PAL.white : c0); // lit tip
+      if (y === tipY[ti]) { P(ctx, X, y, bright > 0.6 ? PAL.white : c0); tips.push([X, y]); } // lit tip
       prevX = X;
     }
   }
@@ -117,9 +130,11 @@ function drawFloater(ctx, ox, oy, { wave, pose, bob, bright, flare }) {
   P(ctx, cx + Math.round(Math.cos(a) * 4), coreY - 1 + Math.round(Math.sin(a) * 2), c0);
   P(ctx, cx - Math.round(Math.cos(a) * 6), bot + 4 + Math.round(Math.sin(a + 2) * 2), v0);
 
-  // ---- emissive glow: heart halo + crown rim ----
+  // ---- emissive glow: heart halo + crown rim + luminous tendril tips ----
   glow(ctx, cx, coreY, 4 + Math.round(bright * 3), bright > 0.5 ? PAL.cyan0 : PAL.cyan1);
   glow(ctx, cx - 2, top + 1, 2, PAL.violet0);
+  for (const [tX, tY] of tips) glow(ctx, tX, tY, 1, bright > 0.6 ? PAL.white : PAL.cyan1); // tendril tips shed light
+  if (bright > 0.4) glow(ctx, cx, coreY - 1, 5 + Math.round(bright * 4), lift(PAL.violet0, 0.12)); // whole-bell attack pulse
   if (flare >= 1) glow(ctx, cx, bot, 7, PAL.cyan0);        // release flash
 
   ctx.restore();

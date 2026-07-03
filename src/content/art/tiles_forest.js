@@ -69,45 +69,66 @@ function crystalVein(ctx, x, y, seed) {
     py -= 1 + ((r() * 2) | 0);
     pts.push([Math.min(px, x + 13), Math.max(py, y + 2)]);
   }
+  // recessed relief: a dark violet shadow one px below-right so the vein reads
+  // as carved into the stone (rim light then sits on the upper-left).
+  for (let i = 0; i < pts.length - 1; i++) {
+    line(ctx, pts[i][0] + 1, pts[i][1] + 1, pts[i + 1][0] + 1, pts[i + 1][1] + 1, PAL.violet3);
+  }
   for (let i = 0; i < pts.length - 1; i++) {
     line(ctx, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], PAL.cyan3);
   }
-  // bright core beads along the vein
+  // bright core beads along the vein (fuller ramp: 3-cyan alternation)
   for (let i = 0; i < pts.length; i++) {
-    P(ctx, pts[i][0], pts[i][1], i % 2 ? PAL.cyan2 : PAL.cyan1);
+    P(ctx, pts[i][0], pts[i][1], i % 3 === 0 ? PAL.cyan1 : i % 3 === 1 ? PAL.cyan2 : PAL.cyan1);
   }
   const [mx, my] = pts[(pts.length / 2) | 0];
   glow(ctx, mx, my, 2, PAL.cyan1);
   P(ctx, mx, my, PAL.cyan0);                    // hot node
-  P(ctx, pts[pts.length - 1][0], pts[pts.length - 1][1], PAL.cyan0);
-  // tiny facet sparkle offshoot
+  // both termini glow so the vein feels lit end-to-end
+  const [ex, ey] = pts[pts.length - 1];
+  glow(ctx, ex, ey, 2, PAL.cyan1);
+  P(ctx, ex, ey, PAL.cyan0);
+  glow(ctx, pts[0][0], pts[0][1], 1, PAL.cyan2);
+  // tiny facet sparkle offshoots
   P(ctx, mx + 1, my - 1, PAL.cyan1);
+  P(ctx, mx - 1, my - 1, PAL.cyan0);
 }
 
 // lush glowing teal grass/moss cap on top of stone (air above)
 function grassCap(ctx, x, y, seed) {
   const r = rng(seed);
-  // soil transition
-  dither(ctx, x, y + 5, T, 1, PAL.leaf3, PAL.moss2);
+  // soil transition — fuller ramp, anti-banding dither leaf3 -> moss -> stone
+  // so the grass melts into the stone body with no hard seam line.
   R(ctx, x, y + 4, T, 1, PAL.leaf3);
-  // per-column turf with slightly ragged top edge
+  dither(ctx, x, y + 5, T, 1, PAL.leaf3, PAL.moss2);
+  // sparse soil flecks feathering into the stone (kills the y+6 band)
+  for (let i = 0; i < 5; i++) {
+    P(ctx, x + ((r() * T) | 0), y + 6, r() < 0.5 ? PAL.moss2 : PAL.stone3);
+  }
+  // per-column turf with slightly ragged top edge — full 4-step leaf ramp
   for (let i = 0; i < T; i++) {
     const top = y + (r() < 0.35 ? 0 : 1);
     for (let yy = top; yy <= y + 3; yy++) {
       const d = yy - top;
-      P(ctx, x + i, yy, d === 0 ? PAL.leaf0 : d === 1 ? PAL.leaf1 : (i + yy) & 1 ? PAL.leaf1 : PAL.leaf2);
+      P(ctx, x + i, yy, d === 0 ? PAL.leaf0 : d === 1 ? PAL.leaf1 : d === 2 ? ((i + yy) & 1 ? PAL.leaf1 : PAL.leaf2) : PAL.leaf3);
     }
+  }
+  // rim light: catch the upper-left of the turf with the brightest step
+  for (let i = 0; i < 5; i++) {
+    const bx = x + ((r() * T) | 0);
+    P(ctx, bx, y + 1, PAL.leaf0);
   }
   // teal glow: some blade tips read as bioluminescent
   for (let i = 0; i < 4; i++) {
     const bx = x + ((r() * T) | 0);
     P(ctx, bx, y, r() < 0.5 ? PAL.cyan1 : PAL.cyan0);
   }
-  // tall blades poking up past the turf line
+  // tall blades poking up past the turf line — brightest tip + a dew glint
   for (let i = 0; i < 3; i++) {
     const bx = x + 1 + ((r() * 14) | 0);
     P(ctx, bx, y, PAL.leaf0);
     P(ctx, bx, y + 1, PAL.leaf1);
+    if (i === 0) { glow(ctx, bx, y, 2, PAL.leaf1); P(ctx, bx, y, PAL.cyan0); } // dew catches light
   }
   // moss dripping over the stone edge
   for (let i = 0; i < 2; i++) {
@@ -119,13 +140,19 @@ function grassCap(ctx, x, y, seed) {
   const gx = x + 2 + ((r() * 12) | 0);
   glow(ctx, gx, y + 2, 2, PAL.cyan1);
   P(ctx, gx, y + 2, PAL.cyan0);
-  // tiny flowers: petal cross + warm/pink center
+  // tiny flowers: petal cross + warm/pink center; one blooms bioluminescent
   for (let i = 0; i < 2; i++) {
     const fx = x + 2 + ((r() * 12) | 0), fy = y + 1;
-    const petal = r() < 0.5 ? PAL.pink0 : PAL.magenta0;
+    const lumen = i === 0 && r() < 0.55;
+    const petal = lumen ? PAL.violet0 : r() < 0.5 ? PAL.pink0 : PAL.magenta0;
     P(ctx, fx - 1, fy, petal); P(ctx, fx + 1, fy, petal);
     P(ctx, fx, fy - 1, petal); P(ctx, fx, fy + 1, PAL.leaf2);
-    P(ctx, fx, fy, PAL.gold0);
+    if (lumen) {
+      glow(ctx, fx, fy, 2, PAL.magenta1);   // glowing bloom heart
+      P(ctx, fx, fy, PAL.white);
+    } else {
+      P(ctx, fx, fy, PAL.gold0);
+    }
   }
 }
 
@@ -240,7 +267,8 @@ function shard(ctx, cx, baseY, h, halfW, lean) {
     const w = Math.max(0, Math.round(halfW * t));
     const ox = Math.round(lean * (1 - t));
     for (let dx = -w; dx <= w; dx++) {
-      const c = dx < 0 ? PAL.cyan1 : dx === 0 ? PAL.cyan2 : PAL.cyan3;
+      // full 4-step facet ramp: bright rim on the lit left edge -> dark right face
+      const c = (dx === -w && w > 0) ? PAL.cyan0 : dx < 0 ? PAL.cyan1 : dx === 0 ? PAL.cyan2 : PAL.cyan3;
       P(ctx, cx + ox + dx, yy, c);
     }
   }

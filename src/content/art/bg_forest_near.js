@@ -21,6 +21,7 @@ export function build() {
   const C = {
     backBand: shade(PAL.leaf3, -0.70),   // deep forest mass behind everything
     backBandL: shade(PAL.leaf3, -0.60),
+    backBandD: shade(PAL.leaf3, -0.80),  // deepest shadow at the band's base
     backTrunk: shade(PAL.deepPurple, -0.40),
     backLeafD: shade(PAL.leaf3, -0.64),
     backLeaf: shade(PAL.leaf3, -0.54),
@@ -274,7 +275,19 @@ export function build() {
   const bandWaves = [[3, 10, 1.0], [8, 5, 2.4], [13, 3, 0.6]];
   for (let x = 0; x < W; x++) {
     const top = heightAt(x, 162, bandWaves);
-    R(ctx, x, top, 1, H - top, C.backBand);
+    const span = Math.max(1, H - top);
+    // light-from-above vertical ramp, checker-dithered at the tone seams so
+    // this large mass never bands (checker is seam-safe: W is even)
+    for (let y = top; y < H; y++) {
+      const d = (y - top) / span;                 // 0 canopy tips .. 1 base
+      const chk = (x + y) & 1;
+      let col;
+      if (d < 0.14) col = chk ? C.backBandL : C.backBand;      // faintly lit haze near tips
+      else if (d < 0.58) col = C.backBand;                      // mid body
+      else if (d < 0.80) col = chk ? C.backBandD : C.backBand;  // dithered fall into shadow
+      else col = C.backBandD;                                   // deepest base
+      P(ctx, x, y, col);
+    }
   }
   for (let x = 0; x < W; x += 6) {                       // fluffy canopy bumps on top
     const bx = x + ((rnd() * 6) | 0) - 3;
@@ -297,9 +310,18 @@ export function build() {
   const gWaves = [[8, 2, 0], [3, 1.5, 1.2]];
   for (let x = 0; x < W; x++) {
     const yTop = heightAt(x, GROUND, gWaves);
-    R(ctx, x, yTop, 1, H - yTop, C.ground);
-    P(ctx, x, yTop, C.tuft);
-    R(ctx, x, Math.min(H - 6, yTop + 12), 1, 20, C.groundD);
+    const span = Math.max(1, H - yTop);
+    // dithered ground->deep ramp replaces the old hard groundD strip (no band)
+    for (let y = yTop; y < H; y++) {
+      const d = (y - yTop) / span;
+      const chk = (x + y) & 1;
+      let col = C.ground;
+      if (d > 0.78) col = C.groundD;
+      else if (d > 0.42) col = chk ? C.groundD : C.ground;
+      P(ctx, x, y, col);
+    }
+    P(ctx, x, yTop, C.tuft);                     // lit top edge
+    if ((x & 3) === 0) P(ctx, x, yTop - 1, C.tuftL); // faint rim sparkle on crest
   }
 
   // 3) small crystal clusters behind the hero trunks

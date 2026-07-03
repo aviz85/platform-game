@@ -138,19 +138,28 @@ for (let b = 16; b < 28; b++) {
 // ---- percussion (noise) -----------------------------------------------------
 // midi maps to a highpass: low midi = full-band thump, high midi = crisp cymbal tick.
 const perc = [];
+const FILL = new Set([7, 11, 15, 23, 27]);      // phrase-end tom fills, every 4 bars
 for (let b = 4; b < BARS; b++) {
   if (b === BARS - 1) break;                    // last bar: wind only
+  if (b === 19) {                               // DROP → build before B: kill the beat,
+    // a rising noise roll swells alone into the B downbeat (full band slams back at 20)
+    for (let s = 8; s < 16; s++) perc.push([b, s, 84 + (s - 8), 1]);
+    continue;
+  }
   perc.push([b, 0, 38, 1]);                     // downbeat thump
   if (b < 12) {                                 // A: half-time, stately
     perc.push([b, 8, 96, 1]);
-    if (b % 2 === 1) perc.push([b, 12, 96, 1]);
+    if (b % 2 === 1 && !FILL.has(b)) perc.push([b, 12, 96, 1]);
   } else if (b < 28) {                          // A' + B: backbeat hats
-    perc.push([b, 4, 96, 1], [b, 8, 38, 1], [b, 12, 96, 1]);
-    if (b % 2 === 1) perc.push([b, 14, 92, 1]);
+    perc.push([b, 4, 96, 1], [b, 8, 38, 1]);
+    if (!FILL.has(b)) perc.push([b, 12, 96, 1]);
+    if (b % 2 === 1 && !FILL.has(b)) perc.push([b, 14, 92, 1]);
     if (b >= 20 && b % 2 === 0) perc.push([b, 6, 94, 1]); // B: extra shimmer
   } else {                                      // outro: thin back out
     perc.push([b, 8, 96, 1]);
   }
+  // tumbling tom fill on the last beat, tipping the phrase into the next downbeat crash
+  if (FILL.has(b)) perc.push([b, 12, 80, 1], [b, 13, 72, 1], [b, 14, 64, 1], [b, 15, 56, 1]);
 }
 
 // ---- wind + crash washes (noise, long decay) --------------------------------

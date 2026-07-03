@@ -49,18 +49,20 @@ export const SFX = {
   death:   { wave: 'sawtooth', from: 640,  to: 48,   dur: 0.85, vol: 0.32, curve: 'exp', attack: 0.010 },
 
   // ---------------- rewards (sparkly trills) ----------------
-  // Shard pickup: triple sparkle — each blip chirps upward, repeat+gap makes
-  // a glittering micro-arpeggio. High register = crystal.
-  pickup:  { wave: 'square',   from: 1180, to: 1760, dur: 0.055, vol: 0.20, curve: 'exp', attack: 0.003, repeat: 3, gap: 0.030 },
+  // Shard pickup: triple sparkle — each blip chirps upward into a bright crystal
+  // ping; repeat+gap makes a glittering micro-arpeggio. Engine retriggers the
+  // identical voice, so this reads as a fast three-glint trill in the high register.
+  pickup:  { wave: 'square',   from: 1245, to: 1980, dur: 0.052, vol: 0.20, curve: 'exp', attack: 0.003, repeat: 3, gap: 0.034 },
 
   // Heart: warmer, rounder double-chime an octave below the shard — triangle
   // keeps it soft; two long swells read as "restored".
   heart:   { wave: 'triangle', from: 540,  to: 1080, dur: 0.22, vol: 0.30, curve: 'exp', attack: 0.015, repeat: 2, gap: 0.050 },
 
   // ---------------- world & UI ----------------
-  // Portal: deep swelling whoosh — low noise band rising through the spectrum
-  // with a long attack, like air being pulled into the gate.
-  portal:  { wave: 'noise',    from: 85,   to: 1500, dur: 1.10, vol: 0.38, curve: 'exp', attack: 0.180, q: 1.1 },
+  // Portal: deep swelling whoosh — sub-low noise band drawn up through the whole
+  // spectrum with a long intake attack, like air being pulled into the gate.
+  // Floor sits below the bass music range so it reads as bottomless depth.
+  portal:  { wave: 'noise',    from: 60,   to: 1700, dur: 1.25, vol: 0.40, curve: 'exp', attack: 0.240, q: 1.0 },
 
   // Menu blip: one soft rounded triangle tick, gentle rise so it never pokes.
   menu:    { wave: 'triangle', from: 620,  to: 760,  dur: 0.06, vol: 0.17, curve: 'exp', attack: 0.004 },

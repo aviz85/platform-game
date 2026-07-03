@@ -1,13 +1,14 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T07:02:32.302Z
-> Files: 84 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T11:26:54.921Z
+> Files: 89 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/
 
 - `audit_slime.mjs` — Raster audit for enemy_slime.js: real pixel buffer, checks frame-cell bleed, (~1216 tok)
 - `bg_mid_viewer.html` — Declares r (~336 tok)
 - `boss_verify.mjs` — Minimal real software canvas to render boss_colossus.js sheet to BMP for visual QA. (~1367 tok)
+- `bossdebug.mjs` — Declares sctx (~868 tok)
 - `check_fg.mjs` — Pixel-level sanity check for bg_ruins_fg: real software canvas shim. (~848 tok)
 - `crop.mjs` — OUT: load, writePNG, crc32 (~506 tok)
 - `floater_verify.mjs` — Software rasterizer implementing the ctx subset used by enemy_floater.js, (~1445 tok)
@@ -37,6 +38,7 @@
 ## ./
 
 - `CLAUDE.md` — OpenWolf (~57 tok)
+- `package.json` — Node.js package manifest (~145 tok)
 - `vercel.json` (~37 tok)
 
 ## .claude/
@@ -46,6 +48,10 @@
 ## .claude/rules/
 
 - `openwolf.md` (~313 tok)
+
+## src/
+
+- `main.js` — AETHERFALL — boot + game state machine. (~1755 tok)
 
 ## src/content/art/
 
@@ -116,3 +122,5 @@
 ## tools/
 
 - `integration.mjs` — Headless integration test: load real content + engine, build every level, (~1587 tok)
+- `playthrough.mjs` — Automated playthrough: a greedy platformer bot drives the REAL engine through (~1867 tok)
+- `reach.mjs` — Reachability + boss-kill proof. Dexterity-independent "is it beatable?" check. (~1998 tok)

@@ -1299,6 +1299,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-03T07:02:30.069Z"
+    },
+    {
+      "id": "bug-082",
+      "timestamp": "2026-07-03T11:21:57.641Z",
+      "error_message": "Missing guard clause",
+      "file": "tools/reach.mjs",
+      "root_cause": "No early return/throw for edge case: !headClear(g,c,r,up",
+      "fix": "Added guard clause: if (!headClear(g,c,r,up)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "mjs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T11:21:57.641Z"
     }
   ]
 }

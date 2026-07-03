@@ -41,6 +41,7 @@ let fadeDir = -1;      // -1 fading in, +1 fading out
 let pendingState = null;
 let victoryT = 0, gameOverT = 0;
 let totalShards = 0;
+let pauseSel = 0;
 
 function startLevel(idx) {
   levelIdx = idx;
@@ -82,22 +83,36 @@ function update(dt, time) {
       goto('play', () => startLevel(0));
     }
   } else if (state === 'play') {
-    world.update(dt, input);
-    if (world.completed && world.completeT > 0.9 && !pendingState) {
-      totalShards = world.player.shards;
-      audio.playSfx('menu');
-      if (levelIdx + 1 < content.LEVELS.length) {
-        goto('play', () => startLevel(levelIdx + 1));
-      } else {
-        goto('victory', () => { victoryT = 0; audio.playMusic('title'); });
+    if (input.justPressed('pause') && !pendingState && !world.player.dead && !world.completed) {
+      state = 'paused'; pauseSel = 0; audio.playSfx('menu');
+    } else {
+      world.update(dt, input);
+      if (world.completed && world.completeT > 0.9 && !pendingState) {
+        totalShards = world.player.shards;
+        audio.playSfx('menu');
+        if (levelIdx + 1 < content.LEVELS.length) {
+          goto('play', () => startLevel(levelIdx + 1));
+        } else {
+          goto('victory', () => { victoryT = 0; audio.playMusic('title'); });
+        }
+      }
+      if (world.events.includes('bossDead') && !world._victoryQueued) {
+        world._victoryQueued = true;
+        setTimeout(() => {}, 0);
+      }
+      if (world.player.dead && world.player.deathT > 1.6 && !pendingState) {
+        goto('gameover', () => { gameOverT = 0; audio.stopMusic(); });
       }
     }
-    if (world.events.includes('bossDead') && !world._victoryQueued) {
-      world._victoryQueued = true;
-      setTimeout(() => {}, 0);
-    }
-    if (world.player.dead && world.player.deathT > 1.6 && !pendingState) {
-      goto('gameover', () => { gameOverT = 0; audio.stopMusic(); });
+  } else if (state === 'paused') {
+    if (!pendingState) {
+      if (input.justPressed('pause')) { state = 'play'; audio.playSfx('menu'); }
+      else if (input.justPressed('left') || input.justPressed('right')) { pauseSel = 1 - pauseSel; audio.playSfx('menu'); }
+      else if (input.justPressed('start') || input.justPressed('jump') || input.justPressed('attack')) {
+        audio.playSfx('menu');
+        if (pauseSel === 0) state = 'play';
+        else { totalShards = 0; goto('title', () => audio.stopMusic()); }
+      }
     }
   } else if (state === 'gameover') {
     gameOverT += dt;
@@ -121,6 +136,17 @@ function render(dt, time) {
   } else if (state === 'play') {
     world.draw(ctx);
     hud.draw(ctx, world, dt, W, H);
+  } else if (state === 'paused') {
+    world.draw(ctx);                       // frozen frame behind the overlay
+    hud.draw(ctx, world, dt, W, H);
+    ctx.fillStyle = 'rgba(7,4,16,0.68)'; ctx.fillRect(0, 0, W, H);
+    hud.drawText(ctx, 'PAUSED', W / 2, 88, 2, 'center');
+    const opts = ['RESUME', 'QUIT TO TITLE'];
+    for (let i = 0; i < opts.length; i++) {
+      const label = i === pauseSel ? `- ${opts[i]} -` : opts[i];
+      hud.drawText(ctx, label, W / 2, 126 + i * 16, 1, 'center');
+    }
+    hud.drawText(ctx, 'ESC RESUME    LEFT/RIGHT SELECT    ENTER CONFIRM', W / 2, H - 22, 1, 'center');
   } else if (state === 'gameover') {
     ctx.fillStyle = '#0b0716'; ctx.fillRect(0, 0, W, H);
     hud.drawText(ctx, 'SIGNAL LOST', W / 2, 100, 2, 'center');

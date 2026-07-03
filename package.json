@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8765",
-    "validate": "node tools/validate.mjs all"
+    "validate": "node tools/validate.mjs all",
+    "integration": "node tools/integration.mjs .",
+    "beatable": "node tools/reach.mjs .",
+    "playthrough": "node tools/playthrough.mjs .",
+    "test": "node tools/validate.mjs all && node tools/integration.mjs . && node tools/reach.mjs ."
   }
 }

@@ -4,7 +4,7 @@ import { drawAnim, animLength } from '../engine/animator.js';
 
 const SPEED = 130, ACCEL = 1400, FRICTION = 1100;
 const GRAV = 1350, MAX_FALL = 380;
-const JUMP_V = -335, JUMP_CUT = 0.42;
+const JUMP_V = -440, JUMP_CUT = 0.42; // peak ~4.5 tiles — matches level-design spec (was -335 ≈ 2.6 tiles, too low)
 const COYOTE = 0.10, BUFFER = 0.12;
 const DASH_SPEED = 330, DASH_TIME = 0.16, DASH_CD = 0.55;
 const ATTACK_TIME = 0.32, ATTACK_CD = 0.38;

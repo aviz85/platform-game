@@ -352,6 +352,25 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-02T19:08:36.699Z"
+    },
+    {
+      "id": "bug-023",
+      "timestamp": "2026-07-03T05:30:49.699Z",
+      "error_message": "Level 2 (and other levels) had vertical jumps onto platforms the player could not physically reach ('the jump is too high').",
+      "file": "src/game/player.js",
+      "root_cause": "JUMP_V was -335 with GRAV 1350, giving a peak of only 41.6px (~2.6 tiles). But CONTRACTS.md told level designers the player jumps '~4.5 tiles' (max 4-tile gaps), so every level was built to 3-4 tile vertical jumps that were impossible. Physics never matched the design spec.",
+      "fix": "Set JUMP_V to -440 (peak 71.7px = 4.48 tiles), matching the documented spec. Clears 4-tile jumps with margin; verified via tools/integration.mjs across all 6 levels.",
+      "tags": [
+        "gameplay",
+        "physics",
+        "jump",
+        "level-design",
+        "spec-mismatch",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T05:30:49.699Z"
     }
   ]
 }

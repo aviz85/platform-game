@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-02T19:24:11.198Z
-> Files: 71 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T05:30:49.686Z
+> Files: 73 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/
 
@@ -32,6 +32,7 @@
 ## ./
 
 - `CLAUDE.md` — OpenWolf (~57 tok)
+- `vercel.json` (~37 tok)
 
 ## .claude/
 
@@ -96,6 +97,10 @@
 - `level3.js` — AETHERFALL — level3.js — "SKY BASTION" (kind: level) (~1827 tok)
 - `level5.js` — AETHERFALL — Level 5: NEON DEPTHS (biome: depths, music: depths) (~2061 tok)
 - `level6.js` — AETHERFALL — level6.js — "THE REACTOR HEART" (kind: level) (~1246 tok)
+
+## src/game/
+
+- `player.js` — Player controller: run, variable jump, coyote time, jump buffer, dash, melee attack. (~1741 tok)
 
 ## tools/
 

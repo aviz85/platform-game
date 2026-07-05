@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T11:26:54.921Z
-> Files: 89 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-05T09:57:17.230Z
+> Files: 90 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../private/tmp/claude-501/-Users-aviz-platform-game/d7270599-ac6e-43c3-acde-813f52a52c4b/scratchpad/
 
@@ -48,6 +48,10 @@
 ## .claude/rules/
 
 - `openwolf.md` (~313 tok)
+
+## .github/workflows/
+
+- `pages.yml` — CI: Deploy to GitHub Pages (~163 tok)
 
 ## src/
 

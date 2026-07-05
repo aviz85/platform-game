@@ -399,3 +399,6 @@
 - New verification tools: tools/reach.mjs (BFS reachability + boss-kill sim) proves ALL 6 levels beatable; tools/playthrough.mjs (greedy bot); npm run test/beatable/integration/playthrough.
 - Deployed to Vercel prod (platform-game-silk.vercel.app). Repo still private (pending user gh public).
 | 14:28 | Session end: 248 writes across 60 files (player.js, jumptest.mjs, enemy_drone.js, enemy_floater.js, enemy_wraith.js) | 72 reads | ~198808 tok |
+| 14:38 | Session end: 248 writes across 60 files (player.js, jumptest.mjs, enemy_drone.js, enemy_floater.js, enemy_wraith.js) | 72 reads | ~198808 tok |
+| 15:15 | Session end: 248 writes across 60 files (player.js, jumptest.mjs, enemy_drone.js, enemy_floater.js, enemy_wraith.js) | 72 reads | ~198808 tok |
+| 12:57 | Created .github/workflows/pages.yml | — | ~163 |
